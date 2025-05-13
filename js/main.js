@@ -308,6 +308,8 @@ function renderMenuItems(categoryId) {
     const items = menuData.items.filter(item => item.category === categoryId);
     
     items.forEach(item => {
+        if (!item.available) return; // Skip unavailable items
+        
         const itemElement = document.createElement('div');
         itemElement.className = 'menu-item';
         itemElement.innerHTML = `

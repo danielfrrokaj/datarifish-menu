@@ -496,8 +496,17 @@ function renderItems(items) {
             <div class="item-info">
                 <h3>${item.name.en}</h3>
                 <p>${item.category} - ${formatPrice(item.price)} ALL</p>
+                <p class="availability-status ${item.available ? 'available' : 'unavailable'}">
+                    <i class="fas ${item.available ? 'fa-check-circle' : 'fa-times-circle'}"></i>
+                    ${item.available ? 'Available' : 'Unavailable'}
+                </p>
             </div>
             <div class="item-actions">
+                <button class="availability-btn ${item.available ? 'available' : 'unavailable'}" 
+                        onclick="toggleAvailability('${item.id}')">
+                    <i class="fas ${item.available ? 'fa-toggle-on' : 'fa-toggle-off'}"></i>
+                    ${item.available ? 'Mark Unavailable' : 'Mark Available'}
+                </button>
                 <button class="edit-btn" onclick="editItem('${item.id}')">
                     <i class="fas fa-edit"></i> Edit
                 </button>
@@ -572,6 +581,7 @@ function editItem(itemId) {
         document.getElementById('itemCategory').value = item.category;
         document.getElementById('itemPrice').value = item.price;
         document.getElementById('itemImage').value = item.image;
+        document.getElementById('itemAvailable').checked = item.available ?? true;
         document.getElementById('itemName_en').value = item.name.en;
         document.getElementById('itemName_it').value = item.name.it;
         document.getElementById('itemName_sq').value = item.name.sq;
@@ -598,6 +608,17 @@ function deleteItem(itemId) {
         data.items = data.items.filter(i => i.id !== itemId);
         saveData(data);
     }
+}
+
+function toggleAvailability(itemId) {
+    const data = JSON.parse(localStorage.getItem('menuData')) || { categories: [], items: [] };
+    data.items = data.items.map(item => {
+        if (item.id === itemId) {
+            return { ...item, available: !item.available };
+        }
+        return item;
+    });
+    saveData(data);
 }
 
 // Form submissions
@@ -634,6 +655,7 @@ itemForm.addEventListener('submit', (e) => {
         category: document.getElementById('itemCategory').value,
         price: parseInt(document.getElementById('itemPrice').value),
         image: document.getElementById('itemImage').value,
+        available: document.getElementById('itemAvailable').checked,
         name: {
             en: document.getElementById('itemName_en').value,
             it: document.getElementById('itemName_it').value,
