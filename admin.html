@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detarifish Menu - Admin Panel</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@6.11.0/css/flag-icons.min.css">
+    <style>
+        :root {
+            --primary-blue: #1a73e8;
+            --accent-blue: #4285f4;
+            --white: #ffffff;
+            --text-dark: #333333;
+            --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+        }
+
+        /* Login Container */
+        .login-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .login-box {
+            background: var(--white);
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+
+        /* Admin Panel */
+        .admin-panel {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .admin-header {
+            background: var(--primary-blue);
+            color: var(--white);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo i {
+            font-size: 2rem;
+        }
+
+        .admin-content {
+            display: flex;
+            flex: 1;
+        }
+
+        .sidebar {
+            width: 200px;
+            background: var(--white);
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .main-area {
+            flex: 1;
+            padding: 2rem;
+        }
+
+        /* Forms and Inputs */
+        input, select, textarea {
+            width: 100%;
+            padding: 0.8rem;
+            margin: 0.5rem 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        button {
+            background: var(--primary-blue);
+            color: var(--white);
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: var(--accent-blue);
+        }
+
+        button.active {
+            background: var(--accent-blue);
+        }
+
+        .logout-btn {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Items List */
+        .items-list {
+            display: grid;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .item-card {
+            background: var(--white);
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .item-info h3 {
+            margin: 0 0 0.5rem 0;
+        }
+
+        .item-info p {
+            margin: 0;
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .edit-btn {
+            background: #4caf50;
+        }
+
+        .delete-btn {
+            background: #f44336;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: var(--white);
+            padding: 2rem;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .translation-inputs {
+            margin: 1rem 0;
+        }
+
+        .translation-inputs h3 {
+            margin: 1rem 0 0.5rem 0;
+            color: #666;
+            font-size: 1rem;
+        }
+
+        .form-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .admin-content {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                padding: 1rem;
+            }
+
+            .main-area {
+                padding: 1rem;
+            }
+
+            .item-card {
+                flex-direction: column;
+                text-align: center;
+                gap: 1rem;
+            }
+
+            .item-actions {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body class="admin-body">
+    <!-- Login Container -->
+    <div class="login-container" id="loginContainer">
+        <div class="login-box">
+            <h2>Admin Login</h2>
+            <input type="password" id="adminPassword" placeholder="Enter password">
+            <button onclick="login()">
+                <i class="fas fa-sign-in-alt"></i> Login
+            </button>
+        </div>
+    </div>
+
+    <!-- Admin Panel -->
+    <div class="admin-panel" id="adminPanel" style="display: none;">
+        <header class="admin-header">
+            <div class="logo">
+                <i class="fas fa-fish"></i>
+                <h1>Datarifish Admin</h1>
+            </div>
+            <button onclick="logout()" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </header>
+
+        <div class="admin-content">
+            <div class="sidebar">
+                <button class="active" onclick="showSection('categories')">Categories</button>
+                <button onclick="showSection('items')">Menu Items</button>
+            </div>
+
+            <div class="main-area">
+                <!-- Categories Section -->
+                <div id="categoriesSection" class="section">
+                    <h2>Categories</h2>
+                    <button class="add-btn" onclick="showAddCategoryForm()">
+                        <i class="fas fa-plus"></i> Add Category
+                    </button>
+                    <div id="categoriesList" class="items-list"></div>
+                </div>
+
+                <!-- Menu Items Section -->
+                <div id="itemsSection" class="section" style="display: none;">
+                    <h2>Menu Items</h2>
+                    <button class="add-btn" onclick="showAddItemForm()">
+                        <i class="fas fa-plus"></i> Add Menu Item
+                    </button>
+                    <div id="itemsList" class="items-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Category Modal -->
+    <div id="categoryModal" class="modal">
+        <div class="modal-content">
+            <h2 id="categoryModalTitle">Add Category</h2>
+            <form id="categoryForm">
+                <input type="text" id="categoryId" placeholder="Category ID (e.g., starters)">
+                <input type="hidden" id="categoryIcon">
+                
+                <div class="translation-inputs">
+                    <h3>Icon</h3>
+                    <div id="selectedIconPreview">
+                        <i class="fas fa-icons"></i>
+                        <span>Click to select icon</span>
+                    </div>
+
+                    <h3>Names</h3>
+                    <input type="text" id="categoryName_en" placeholder="Name (English)">
+                    <input type="text" id="categoryName_it" placeholder="Name (Italian)">
+                    <input type="text" id="categoryName_sq" placeholder="Name (Albanian)">
+                </div>
+
+                <div class="form-buttons">
+                    <button type="button" onclick="closeModal('categoryModal')">Cancel</button>
+                    <button type="submit">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add/Edit Menu Item Modal -->
+    <div id="itemModal" class="modal">
+        <div class="modal-content">
+            <h2 id="itemModalTitle">Add Menu Item</h2>
+            <form id="itemForm">
+                <input type="text" id="itemId" placeholder="Item ID (e.g., fish_soup)">
+                <select id="itemCategory"></select>
+                <input type="number" id="itemPrice" placeholder="Price in ALL">
+                <input type="text" id="itemImage" placeholder="Image filename (e.g., fish-soup.jpg)">
+
+                <div class="translation-inputs">
+                    <h3>Names</h3>
+                    <input type="text" id="itemName_en" placeholder="Name (English)">
+                    <input type="text" id="itemName_it" placeholder="Name (Italian)">
+                    <input type="text" id="itemName_sq" placeholder="Name (Albanian)">
+
+                    <h3>Descriptions</h3>
+                    <textarea id="itemDesc_en" placeholder="Description (English)"></textarea>
+                    <textarea id="itemDesc_it" placeholder="Description (Italian)"></textarea>
+                    <textarea id="itemDesc_sq" placeholder="Description (Albanian)"></textarea>
+                </div>
+
+                <div class="form-buttons">
+                    <button type="button" onclick="closeModal('itemModal')">Cancel</button>
+                    <button type="submit">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/admin.js"></script>
+</body>
+</html> 
