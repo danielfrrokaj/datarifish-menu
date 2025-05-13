@@ -101,7 +101,7 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    padding-bottom: calc(6rem + 100px); /* Adjust padding to prevent content from being hidden behind footer */
+    padding-bottom: calc(2.5rem + 32px); /* Reduced padding to match smaller footer */
 }
 
 main {
@@ -218,7 +218,7 @@ header {
 .site-footer {
     background: var(--primary-blue);
     color: var(--white);
-    padding: 2rem 1rem;
+    padding: 0.75rem 1rem;
     position: fixed;
     bottom: 0;
     left: 0;
@@ -230,16 +230,14 @@ header {
     max-width: 1200px;
     margin: 0 auto;
     display: flex;
-    flex-direction: column;
+    justify-content: space-between;
     align-items: center;
-    gap: 1.5rem;
 }
 
 .footer-links {
     display: flex;
-    gap: 2rem;
+    gap: 1.5rem;
     flex-wrap: wrap;
-    justify-content: center;
 }
 
 .footer-link {
@@ -248,10 +246,11 @@ header {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.5rem 1rem;
+    padding: 0.25rem 0.75rem;
     border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 5px;
+    border-radius: 4px;
     transition: all 0.3s ease;
+    font-size: 0.9rem;
 }
 
 .footer-link:hover {
@@ -260,13 +259,13 @@ header {
 }
 
 .footer-link i {
-    font-size: 1.2rem;
+    font-size: 1rem;
 }
 
 .footer-copyright {
-    text-align: center;
+    text-align: right;
     opacity: 0.8;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
 }
 
 .footer-copyright p {
@@ -276,17 +275,26 @@ header {
 /* Responsive Footer */
 @media (max-width: 768px) {
     .site-footer {
-        padding: 1.5rem 1rem;
-        margin-top: 3rem;
+        padding: 0.5rem;
+    }
+
+    .footer-content {
+        flex-direction: column;
+        gap: 0.5rem;
     }
 
     .footer-links {
-        gap: 1rem;
+        gap: 0.75rem;
     }
 
     .footer-link {
-        padding: 0.4rem 0.8rem;
-        font-size: 0.9rem;
+        padding: 0.2rem 0.5rem;
+        font-size: 0.8rem;
+    }
+
+    .footer-copyright {
+        text-align: center;
+        font-size: 0.75rem;
     }
 }
 
