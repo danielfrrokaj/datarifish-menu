@@ -1,5 +1,148 @@
-// Simple admin password (in a real app, this would be handled securely on the server)
-const ADMIN_PASSWORD = 'admin123';
+// Authentication state
+let authToken = sessionStorage.getItem('adminAuthToken');
+const AUTH_TOKEN_KEY = 'adminAuthToken';
+const LOGIN_ATTEMPTS_KEY = 'loginAttempts';
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOCKOUT_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds
+
+// Check if user is locked out
+function isLockedOut() {
+    const lockoutTime = localStorage.getItem('lockoutUntil');
+    if (lockoutTime && parseInt(lockoutTime) > Date.now()) {
+        const remainingMinutes = Math.ceil((parseInt(lockoutTime) - Date.now()) / (60 * 1000));
+        return `Too many login attempts. Please try again in ${remainingMinutes} minutes.`;
+    }
+    return false;
+}
+
+// Reset login attempts
+function resetLoginAttempts() {
+    localStorage.removeItem('loginAttempts');
+    localStorage.removeItem('lockoutUntil');
+}
+
+// Increment login attempts and check for lockout
+function handleFailedLogin() {
+    const attempts = parseInt(localStorage.getItem(LOGIN_ATTEMPTS_KEY) || '0') + 1;
+    localStorage.setItem(LOGIN_ATTEMPTS_KEY, attempts);
+    
+    if (attempts >= MAX_LOGIN_ATTEMPTS) {
+        const lockoutUntil = Date.now() + LOCKOUT_DURATION;
+        localStorage.setItem('lockoutUntil', lockoutUntil);
+        return isLockedOut();
+    }
+    return `Invalid password. ${MAX_LOGIN_ATTEMPTS - attempts} attempts remaining.`;
+}
+
+// Generate secure token
+function generateToken() {
+    const array = new Uint8Array(32);
+    crypto.getRandomValues(array);
+    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
+// Login functionality
+async function login() {
+    const password = document.getElementById('adminPassword').value;
+    const lockoutMessage = isLockedOut();
+    
+    if (lockoutMessage) {
+        alert(lockoutMessage);
+        return;
+    }
+
+    try {
+        // Hash the password (in a real app, this would be done server-side)
+        const encoder = new TextEncoder();
+        const data = encoder.encode(password);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const hashedPassword = hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
+        
+        // In a real app, this would be a server request
+        if (hashedPassword === '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918') { // admin
+            const token = generateToken();
+            sessionStorage.setItem(AUTH_TOKEN_KEY, token);
+            authToken = token;
+            resetLoginAttempts();
+            loginContainer.style.display = 'none';
+            adminPanel.style.display = 'flex';
+            loadData();
+            
+            // Set session expiry
+            setTimeout(logout, 3600000); // 1 hour
+        } else {
+            const message = handleFailedLogin();
+            alert(message);
+        }
+    } catch (error) {
+        console.error('Login error:', error);
+        alert('An error occurred during login. Please try again.');
+    }
+}
+
+// Check authentication on page load
+function checkAuth() {
+    if (!authToken) {
+        logout();
+        return;
+    }
+    
+    loginContainer.style.display = 'none';
+    adminPanel.style.display = 'flex';
+    loadData();
+}
+
+// Logout functionality
+function logout() {
+    sessionStorage.removeItem(AUTH_TOKEN_KEY);
+    authToken = null;
+    loginContainer.style.display = 'flex';
+    adminPanel.style.display = 'none';
+    document.getElementById('adminPassword').value = '';
+}
+
+// Add authentication check to all sensitive functions
+function requireAuth(fn) {
+    return function(...args) {
+        if (!authToken) {
+            logout();
+            return;
+        }
+        return fn.apply(this, args);
+    };
+}
+
+// Wrap sensitive functions with authentication check
+const loadData = requireAuth(function() {
+    const data = JSON.parse(localStorage.getItem('menuData')) || {
+        categories: [],
+        items: []
+    };
+    currentItems = data.items; // Store items for filtering
+    renderCategories(data.categories);
+    renderItems(currentItems);
+    updateCategorySelect(data.categories);
+});
+
+const saveData = requireAuth(function(data) {
+    localStorage.setItem('menuData', JSON.stringify(data));
+    loadData();
+});
+
+// Initialize authentication check
+document.addEventListener('DOMContentLoaded', () => {
+    checkAuth();
+    initializeIconPicker();
+    initializeSearch();
+    initializeImagePreview();
+});
+
+// Add security headers
+const meta = document.createElement('meta');
+meta.httpEquiv = 'Content-Security-Policy';
+meta.content = "default-src 'self' https://cdnjs.cloudflare.com https://img.icons8.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' https://img.icons8.com data:; script-src 'self' 'unsafe-inline';";
+document.head.appendChild(meta);
 
 // DOM Elements
 const loginContainer = document.getElementById('loginContainer');
@@ -13,29 +156,14 @@ const itemForm = document.getElementById('itemForm');
 const itemCategory = document.getElementById('itemCategory');
 const categoryIconInput = document.getElementById('categoryIcon');
 const iconPickerPreview = document.getElementById('selectedIconPreview');
+const itemSearch = document.getElementById('itemSearch');
+const searchLanguage = document.getElementById('searchLanguage');
 
 // State
 let editingItemId = null;
 let editingCategoryId = null;
 let customIcons = JSON.parse(localStorage.getItem('customIcons')) || [];
-
-// Login functionality
-function login() {
-    const password = document.getElementById('adminPassword').value;
-    if (password === ADMIN_PASSWORD) {
-        loginContainer.style.display = 'none';
-        adminPanel.style.display = 'flex';
-        loadData();
-    } else {
-        alert('Invalid password');
-    }
-}
-
-function logout() {
-    loginContainer.style.display = 'flex';
-    adminPanel.style.display = 'none';
-    document.getElementById('adminPassword').value = '';
-}
+let currentItems = []; // Store current items for filtering
 
 // Section navigation
 function showSection(section) {
@@ -46,24 +174,6 @@ function showSection(section) {
     document.querySelectorAll('.sidebar button').forEach(btn => {
         btn.classList.toggle('active', btn.textContent.toLowerCase().includes(section));
     });
-}
-
-// Load and save data
-function loadData() {
-    // Load data from localStorage or use default data
-    const data = JSON.parse(localStorage.getItem('menuData')) || {
-        categories: [],
-        items: []
-    };
-    
-    renderCategories(data.categories);
-    renderItems(data.items);
-    updateCategorySelect(data.categories);
-}
-
-function saveData(data) {
-    localStorage.setItem('menuData', JSON.stringify(data));
-    loadData(); // Reload the UI
 }
 
 // Icon picker functionality
@@ -457,8 +567,28 @@ function initializeIconPicker() {
     });
 }
 
-// Initialize icon picker when DOM is loaded
-document.addEventListener('DOMContentLoaded', initializeIconPicker);
+// Add search functionality
+function initializeSearch() {
+    itemSearch.addEventListener('input', filterItems);
+    searchLanguage.addEventListener('change', filterItems);
+}
+
+function filterItems() {
+    const searchTerm = itemSearch.value.toLowerCase();
+    const searchLang = searchLanguage.value;
+    
+    const filteredItems = currentItems.filter(item => {
+        const itemName = item.name[searchLang].toLowerCase();
+        const itemDesc = item.description[searchLang].toLowerCase();
+        const itemCategory = item.category.toLowerCase();
+        
+        return itemName.includes(searchTerm) || 
+               itemDesc.includes(searchTerm) || 
+               itemCategory.includes(searchTerm);
+    });
+    
+    renderItems(filteredItems);
+}
 
 // Render functions
 function renderCategories(categories) {
@@ -489,12 +619,24 @@ function renderCategories(categories) {
 
 function renderItems(items) {
     itemsList.innerHTML = '';
+    
+    if (items.length === 0) {
+        const noResults = document.createElement('div');
+        noResults.className = 'no-results';
+        noResults.innerHTML = `
+            <i class="fas fa-search"></i>
+            <p>No items found</p>
+        `;
+        itemsList.appendChild(noResults);
+        return;
+    }
+    
     items.forEach(item => {
         const card = document.createElement('div');
         card.className = 'item-card';
         card.innerHTML = `
             <div class="item-info">
-                <h3>${item.name.en}</h3>
+                <h3>${item.name.sq} (${item.name.en})</h3>
                 <p>${item.category} - ${formatPrice(item.price)} ALL</p>
                 <p class="availability-status ${item.available ? 'available' : 'unavailable'}">
                     <i class="fas ${item.available ? 'fa-check-circle' : 'fa-times-circle'}"></i>
@@ -503,14 +645,14 @@ function renderItems(items) {
             </div>
             <div class="item-actions">
                 <button class="availability-btn ${item.available ? 'available' : 'unavailable'}" 
-                        onclick="toggleAvailability('${item.id}')">
+                        onclick="event.stopPropagation(); toggleAvailability('${item.id}')">
                     <i class="fas ${item.available ? 'fa-toggle-on' : 'fa-toggle-off'}"></i>
                     ${item.available ? 'Mark Unavailable' : 'Mark Available'}
                 </button>
-                <button class="edit-btn" onclick="editItem('${item.id}')">
+                <button class="edit-btn" onclick="event.stopPropagation(); editItem('${item.id}')">
                     <i class="fas fa-edit"></i> Edit
                 </button>
-                <button class="delete-btn" onclick="deleteItem('${item.id}')">
+                <button class="delete-btn" onclick="event.stopPropagation(); deleteItem('${item.id}')">
                     <i class="fas fa-trash"></i> Delete
                 </button>
             </div>
@@ -571,8 +713,60 @@ function editCategory(categoryId) {
     }
 }
 
+// Image preview functionality
+function initializeImagePreview() {
+    const imageInput = document.getElementById('itemImage');
+    const imagePreview = document.getElementById('imagePreview');
+
+    imageInput.addEventListener('input', function() {
+        const imageUrl = this.value.trim();
+        updateImagePreview(imageUrl);
+    });
+
+    // Also update preview when editing an item
+    if (imageInput.value) {
+        updateImagePreview(imageInput.value);
+    }
+}
+
+function updateImagePreview(imageUrl) {
+    const imagePreview = document.getElementById('imagePreview');
+    
+    if (!imageUrl) {
+        imagePreview.innerHTML = `
+            <div class="preview-placeholder">
+                <i class="fas fa-image"></i>
+                <span>Image preview will appear here</span>
+            </div>
+        `;
+        imagePreview.classList.remove('has-image');
+        return;
+    }
+
+    // Create a new image element
+    const img = new Image();
+    img.onload = function() {
+        imagePreview.innerHTML = '';
+        imagePreview.appendChild(img);
+        imagePreview.classList.add('has-image');
+    };
+    
+    img.onerror = function() {
+        imagePreview.innerHTML = `
+            <div class="preview-placeholder">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>Invalid image URL</span>
+            </div>
+        `;
+        imagePreview.classList.remove('has-image');
+    };
+    
+    img.src = imageUrl;
+}
+
+// Update the editItem function to handle image preview
 function editItem(itemId) {
-    const data = JSON.parse(localStorage.getItem('menuData'));
+    const data = JSON.parse(localStorage.getItem('menuData')) || { categories: [], items: [] };
     const item = data.items.find(i => i.id === itemId);
     if (item) {
         editingItemId = itemId;
@@ -580,14 +774,22 @@ function editItem(itemId) {
         document.getElementById('itemId').value = item.id;
         document.getElementById('itemCategory').value = item.category;
         document.getElementById('itemPrice').value = item.price;
-        document.getElementById('itemImage').value = item.image;
+        document.getElementById('itemImage').value = item.image || '';
         document.getElementById('itemAvailable').checked = item.available ?? true;
+        
+        // Update image preview
+        updateImagePreview(item.image || '');
+        
+        // Set names with Albanian first
+        document.getElementById('itemName_sq').value = item.name.sq;
         document.getElementById('itemName_en').value = item.name.en;
         document.getElementById('itemName_it').value = item.name.it;
-        document.getElementById('itemName_sq').value = item.name.sq;
+        
+        // Set descriptions with Albanian first
+        document.getElementById('itemDesc_sq').value = item.description.sq;
         document.getElementById('itemDesc_en').value = item.description.en;
         document.getElementById('itemDesc_it').value = item.description.it;
-        document.getElementById('itemDesc_sq').value = item.description.sq;
+        
         itemModal.style.display = 'flex';
     }
 }
@@ -693,4 +895,28 @@ window.onclick = (event) => {
     if (event.target === itemModal) {
         closeModal('itemModal');
     }
-}; 
+};
+
+// Add these styles to your existing styles
+const searchStyles = document.createElement('style');
+searchStyles.textContent = `
+    .no-results {
+        text-align: center;
+        padding: 2rem;
+        background: var(--white);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+    }
+
+    .no-results i {
+        font-size: 2rem;
+        color: #999;
+        margin-bottom: 1rem;
+    }
+
+    .no-results p {
+        color: #666;
+        margin: 0;
+    }
+`;
+document.head.appendChild(searchStyles); 

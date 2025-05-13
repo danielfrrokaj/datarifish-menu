@@ -292,6 +292,160 @@
                 justify-content: center;
             }
         }
+
+        /* Update the sidebar button styles */
+        .sidebar button {
+            background: var(--white);
+            color: var(--primary-blue);
+            border: 1px solid var(--primary-blue);
+            padding: 0.8rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .sidebar button:hover {
+            background: var(--accent-blue);
+            color: var(--white);
+            transform: translateY(-2px);
+        }
+
+        .sidebar button.active {
+            background: var(--primary-blue);
+            color: var(--white);
+            border-color: var(--primary-blue);
+        }
+
+        /* Search Styles */
+        .section-actions {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: var(--white);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+        }
+
+        .search-container {
+            flex: 1;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 1rem 1.2rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            min-width: 300px;
+        }
+
+        .search-input:focus {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
+            outline: none;
+        }
+
+        .search-language {
+            padding: 1rem 1.2rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            background: var(--white);
+            cursor: pointer;
+            min-width: 180px;
+        }
+
+        .search-language:focus {
+            border-color: var(--primary-blue);
+            outline: none;
+        }
+
+        .search-language:hover {
+            border-color: var(--primary-blue);
+        }
+
+        .add-btn {
+            white-space: nowrap;
+            padding: 1rem 1.5rem;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            min-width: 160px;
+        }
+
+        @media (max-width: 768px) {
+            .section-actions {
+                flex-direction: column;
+                padding: 1rem;
+                gap: 1rem;
+            }
+
+            .search-container {
+                width: 100%;
+                flex-direction: column;
+            }
+
+            .search-input,
+            .search-language {
+                width: 100%;
+                min-width: unset;
+            }
+
+            .add-btn {
+                width: 100%;
+                min-width: unset;
+            }
+        }
+
+        .image-input-container {
+            margin-bottom: 1.5rem;
+        }
+
+        .image-preview {
+            margin-top: 1rem;
+            border: 2px dashed #e0e0e0;
+            border-radius: 8px;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+        }
+
+        .preview-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            color: #666;
+        }
+
+        .preview-placeholder i {
+            font-size: 2rem;
+        }
+
+        .image-preview img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .image-preview.has-image {
+            border-style: solid;
+            background: white;
+        }
     </style>
 </head>
 <body class="admin-body">
@@ -337,9 +491,19 @@
                 <!-- Menu Items Section -->
                 <div id="itemsSection" class="section" style="display: none;">
                     <h2>Menu Items</h2>
-                    <button class="add-btn" onclick="showAddItemForm()">
-                        <i class="fas fa-plus"></i> Add Menu Item
-                    </button>
+                    <div class="section-actions">
+                        <div class="search-container">
+                            <input type="text" id="itemSearch" placeholder="Search items..." class="search-input">
+                            <select id="searchLanguage" class="search-language">
+                                <option value="sq">Search in Albanian</option>
+                                <option value="en">Search in English</option>
+                                <option value="it">Search in Italian</option>
+                            </select>
+                        </div>
+                        <button class="add-btn" onclick="showAddItemForm()">
+                            <i class="fas fa-plus"></i> Add Menu Item
+                        </button>
+                    </div>
                     <div id="itemsList" class="items-list"></div>
                 </div>
             </div>
@@ -383,7 +547,15 @@
                 <input type="text" id="itemId" placeholder="Item ID (e.g., fish_soup)">
                 <select id="itemCategory"></select>
                 <input type="number" id="itemPrice" placeholder="Price in ALL">
-                <input type="text" id="itemImage" placeholder="Image filename (e.g., fish-soup.jpg)">
+                <div class="image-input-container">
+                    <input type="text" id="itemImage" placeholder="Image URL (e.g., https://example.com/fish-soup.jpg)">
+                    <div id="imagePreview" class="image-preview">
+                        <div class="preview-placeholder">
+                            <i class="fas fa-image"></i>
+                            <span>Image preview will appear here</span>
+                        </div>
+                    </div>
+                </div>
                 
                 <div class="availability-toggle">
                     <label class="toggle-label">

@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin.html
+
+# Prevent access to sensitive directories
+Disallow: /js/
+Disallow: /css/
+Disallow: /.git/ 

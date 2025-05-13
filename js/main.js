@@ -251,6 +251,7 @@ document.querySelectorAll('.lang-btn').forEach(btn => {
         updateLanguageDisplay();
         updateBackButtonText();
         renderCategories();
+        updateInfoLink();
     });
 });
 
@@ -315,7 +316,7 @@ function renderMenuItems(categoryId) {
         itemElement.innerHTML = `
             ${item.image ? `
                 <div class="menu-item-image">
-                    <img src="assets/images/${item.image}" alt="${item.name[currentLang]}">
+                    <img src="${item.image.startsWith('http') ? item.image : `assets/images/${item.image}`}" alt="${item.name[currentLang]}">
                 </div>
             ` : ''}
             <div class="menu-item-content">
@@ -674,4 +675,30 @@ window.addEventListener('storage', (e) => {
 });
 
 // Remove language selector related code
-document.getElementById('currentLang')?.remove(); 
+document.getElementById('currentLang')?.remove();
+
+// Update footer links with language parameter
+function updateFooterLinks() {
+    const infoLink = document.querySelector('a[href="info.html"]');
+    if (infoLink) {
+        infoLink.href = `info.html?lang=${currentLang}`;
+    }
+}
+
+// Initialize footer links
+document.addEventListener('DOMContentLoaded', () => {
+    updateFooterLinks();
+});
+
+// Update info link with current language
+function updateInfoLink() {
+    const infoLink = document.getElementById('infoLink');
+    if (infoLink) {
+        infoLink.href = `info.html?lang=${currentLang}`;
+    }
+}
+
+// Initialize info link
+document.addEventListener('DOMContentLoaded', () => {
+    updateInfoLink();
+}); 

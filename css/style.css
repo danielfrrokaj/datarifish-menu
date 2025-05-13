@@ -1,11 +1,12 @@
 :root {
-    --primary-blue: #1e3d59;
-    --light-blue: #3498db;
-    --accent-blue: #17a2b8;
+    --primary-blue: #1a73e8;
+    --light-blue: #e8f1ff;
+    --lighter-blue: #f5f9ff;
+    --accent-blue: #4285f4;
     --white: #ffffff;
     --light-gray: #f8f9fa;
-    --text-dark: #2c3e50;
-    --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    --text-dark: #333333;
+    --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 * {
@@ -153,6 +154,10 @@ header {
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1.5rem;
     margin-bottom: 2rem;
+    background: var(--lighter-blue);
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.03);
 }
 
 /* Menu Items */
@@ -323,4 +328,16 @@ header {
         width: 100%;
         justify-content: center;
     }
+}
+
+.category-card {
+    background: var(--light-blue);
+    padding: 2rem;
+    border-radius: 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow);
+    width: 100%;
+    margin: 0;
 } 

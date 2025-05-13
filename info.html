@@ -12,6 +12,7 @@
             --accent-blue: #4285f4;
             --white: #ffffff;
             --text-dark: #333333;
+            --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         body {
@@ -22,17 +23,75 @@
         }
 
         header {
-            position: relative;
-            background: var(--primary-blue);
-            padding: 2rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background-color: var(--primary-blue);
             color: var(--white);
-            text-align: center;
+            border-radius: 0 0 10px 10px;
+            margin-bottom: 2rem;
         }
 
-        header h1 {
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo i {
+            font-size: 2rem;
+        }
+
+        .logo h1 {
             margin: 0;
-            font-size: 2.5rem;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            font-size: 2rem;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .language-switcher button {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            color: var(--white);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .language-switcher button:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .language-switcher .fi {
+            width: 24px !important;
+            height: 18px !important;
+        }
+
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+                padding: 1rem;
+            }
+
+            .header-actions {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .logo h1 {
+                font-size: 1.8rem;
+            }
         }
 
         .info-section {
@@ -134,37 +193,6 @@
             box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
         }
 
-        /* Language Selector */
-        .language-switcher {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-        }
-
-        .language-switcher button {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem 1rem;
-            background: transparent;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 5px;
-            color: var(--white);
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .language-switcher button:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .language-switcher .fi {
-            width: 24px !important;
-            height: 24px !important;
-            border-radius: 50%;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
         @keyframes swim {
             0%, 100% { transform: translateX(0); }
             50% { transform: translateX(10px); }
@@ -190,37 +218,21 @@
             75% { transform: translate(-100px, -50px) rotate(-10deg) scaleX(-1); }
             100% { transform: translate(0, 0) rotate(0deg) scaleX(-1); }
         }
-
-        @media (max-width: 768px) {
-            .info-section { padding: 3rem 1rem; }
-            .info-card { padding: 1.5rem; }
-            .fish-icon { font-size: 2rem; }
-            .info-card h2 { font-size: 1.3rem; }
-            header h1 { font-size: 2rem; }
-            .back-to-menu {
-                bottom: 1rem;
-                right: 1rem;
-                padding: 0.8rem 1.5rem;
-            }
-            .language-switcher {
-                position: relative;
-                top: 0;
-                right: 0;
-                margin-top: 1rem;
-                display: flex;
-                justify-content: center;
-            }
-        }
     </style>
 </head>
 <body>
     <header>
-        <h1 data-translate="info_title">Datarifish Information</h1>
-        <div class="language-switcher">
-            <button id="currentLang">
-                <span id="currentLangFlag" class="fi fi-al"></span>
-                <span id="currentLangText">Shqip</span>
-            </button>
+        <div class="logo">
+            <i class="fas fa-fish"></i>
+            <h1>Datarifish</h1>
+        </div>
+        <div class="header-actions">
+            <div class="language-switcher">
+                <button id="currentLang">
+                    <span id="currentLangFlag"></span>
+                    <span id="currentLangText"></span>
+                </button>
+            </div>
         </div>
     </header>
 
@@ -256,6 +268,16 @@
     </a>
 
     <script>
+        // Get language from URL parameter
+        function getLanguageFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const langParam = urlParams.get('lang');
+            if (langParam && ['sq', 'en', 'it'].includes(langParam)) {
+                currentLang = langParam;
+                localStorage.setItem('language', currentLang);
+            }
+        }
+
         // Translations
         const translations = {
             info_title: {
@@ -332,6 +354,7 @@
         });
 
         // Initialize
+        getLanguageFromUrl();
         updateLanguageDisplay();
         updateTranslations();
     </script>
