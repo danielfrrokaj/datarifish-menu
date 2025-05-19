@@ -277,6 +277,9 @@ function renderCategories() {
     menuData = JSON.parse(localStorage.getItem('menuData')) || defaultMenuData;
     
     categoriesContainer.innerHTML = '';
+    // Hide carousel when showing categories
+    document.querySelector('.category-carousel').style.display = 'none';
+    
     menuData.categories.forEach(category => {
         const categoryElement = document.createElement('div');
         categoryElement.className = 'category-card';
@@ -300,7 +303,17 @@ function renderCategories() {
     });
 }
 
-// Render menu items
+// Add carousel HTML structure
+const carouselHTML = `
+    <div class="category-carousel">
+        <div class="carousel-container" id="categoryCarousel">
+        </div>
+    </div>
+`;
+// Insert carousel after the header instead of at the end
+document.querySelector('header').insertAdjacentHTML('afterend', carouselHTML);
+
+// Update renderMenuItems function to include carousel
 function renderMenuItems(categoryId) {
     // Get fresh data from localStorage
     menuData = JSON.parse(localStorage.getItem('menuData')) || defaultMenuData;
@@ -308,6 +321,24 @@ function renderMenuItems(categoryId) {
     menuItemsContainer.innerHTML = '';
     const items = menuData.items.filter(item => item.category === categoryId);
     
+    // Show carousel and populate it
+    const carousel = document.querySelector('.category-carousel');
+    const carouselContainer = document.getElementById('categoryCarousel');
+    carousel.style.display = 'block';
+    
+    // Populate carousel
+    carouselContainer.innerHTML = menuData.categories.map(category => `
+        <div class="carousel-item ${category.id === categoryId ? 'active' : ''}" 
+             onclick="renderMenuItems('${category.id}')">
+            <i class="${category.icon}"></i>
+            <span>${category.name[currentLang]}</span>
+        </div>
+    `).join('');
+    
+    // Show back button and adjust its position
+    backButtonContainer.style.display = 'block';
+    
+    // Render items
     items.forEach(item => {
         if (!item.available) return; // Skip unavailable items
         
@@ -327,6 +358,28 @@ function renderMenuItems(categoryId) {
         `;
         menuItemsContainer.appendChild(itemElement);
     });
+
+    // Hide categories
+    categoriesContainer.style.display = 'none';
+    menuItemsContainer.style.display = 'grid';
+    
+    // Scroll to top
+    scrollToTop();
+    
+    // Scroll active category into view in carousel
+    const activeItem = carouselContainer.querySelector('.carousel-item.active');
+    if (activeItem) {
+        activeItem.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+}
+
+// Update goBack function to hide carousel
+function goBack() {
+    menuItemsContainer.style.display = 'none';
+    categoriesContainer.style.display = 'grid';
+    backButtonContainer.style.display = 'none';
+    document.querySelector('.category-carousel').style.display = 'none';
+    scrollToTop();
 }
 
 // Format price with thousand separator
