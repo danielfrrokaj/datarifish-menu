@@ -1,7 +1,6 @@
 import { AppBar, Toolbar, Typography, Button, Select, MenuItem, IconButton, Box } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import type { Language } from '../lib/supabase';
 import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu';
 
 const Navbar = () => {
