@@ -111,11 +111,21 @@ const Menu = () => {
 
   const handleCategorySelect = (categoryId: string) => {
     setSelectedCategory(categoryId);
+    // Scroll to top of the page when changing categories
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
   };
 
   const handleBack = () => {
     setSelectedCategory(null);
     setMenuItems([]);
+    // Scroll to top of the page
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
   };
 
   if (error) {
@@ -163,9 +173,11 @@ const Menu = () => {
           <button className="back-button" onClick={handleBack}>
             ← {t('back')}
           </button>
-          <h1>
-            {getCategoryTranslation(categories.find(c => c.id === selectedCategory)?.category_translations)}
-          </h1>
+          <div className="menu-header-content">
+            <h1>
+              {getCategoryTranslation(categories.find(c => c.id === selectedCategory)?.category_translations)}
+            </h1>
+          </div>
         </div>
 
         <div className="category-carousel">
