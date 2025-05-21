@@ -1,0 +1,58 @@
+:root {
+  /* Colors */
+  --white: #ffffff;
+  --black: #000000;
+  --text-color: #2d3748;
+  --border-color: #e2e8f0;
+  --accent-color: #00C9FF;
+  --danger-color: #dc3545;
+  --background-light: #f7fafc;
+  --input-bg: #ffffff;
+  --dialog-backdrop: rgba(0, 0, 0, 0.75);
+  --dialog-backdrop-blur: 8px;
+  --form-bg: #ffffff;
+  
+  /* Dark mode colors */
+  --dark-bg: #1a202c;
+  --dark-input-bg: #2d3748;
+  --dark-input-bg-focus: #374151;
+  --dark-text: #f7fafc;
+  --dark-border: #4a5568;
+  --dark-border-hover: #718096;
+  --dark-dialog-backdrop: rgba(0, 0, 0, 0.85);
+  --dark-form-bg: #1a202c;
+  
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+
+  /* Font Sizes */
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+
+  /* Transitions */
+  --transition-speed: 0.2s;
+}
+
+/* Dark mode variables */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text-color: var(--dark-text);
+    --border-color: var(--dark-border);
+    --white: var(--dark-bg);
+    --background-light: var(--dark-bg);
+    --input-bg: var(--dark-input-bg);
+    --dialog-backdrop: var(--dark-dialog-backdrop);
+    --form-bg: var(--dark-form-bg);
+  }
+} 
