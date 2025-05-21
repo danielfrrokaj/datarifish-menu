@@ -173,7 +173,7 @@ const Menu = () => {
           <button className="back-button" onClick={handleBack}>
             ← {t('back')}
           </button>
-          <div className="menu-header-content">
+          <div className="menu-title-container">
             <h1>
               {getCategoryTranslation(categories.find(c => c.id === selectedCategory)?.category_translations)}
             </h1>

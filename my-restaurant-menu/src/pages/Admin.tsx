@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Category, CategoryTranslation, MenuItemType, MenuItemTranslation, Language } from '../lib/supabase';
 import { supabase } from '../lib/supabase';
-import { FaTrash, FaPencilAlt, FaPlus } from 'react-icons/fa';
+import { FaTrash, FaPencilAlt} from 'react-icons/fa';
 import EditMenuItemForm from '../components/EditMenuItemForm';
 import EditCategoryForm from '../components/EditCategoryForm';
 import '../styles/Admin.css';
