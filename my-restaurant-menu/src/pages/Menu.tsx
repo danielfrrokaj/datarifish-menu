@@ -203,7 +203,7 @@ const Menu = () => {
                     {getMenuItemTranslation(item.menu_item_translations, 'description')}
                   </p>
                   <p className="menu-item-price">
-                    €{item.price.toFixed(2)}
+                    {item.price.toLocaleString('sq-AL')} ALL
                   </p>
                 </div>
               </div>

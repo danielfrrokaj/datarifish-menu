@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Category, CategoryTranslation, MenuItemType, MenuItemTranslation, Language } from '../lib/supabase';
 import { supabase } from '../lib/supabase';
+import { FaTrash, FaPencilAlt, FaPlus } from 'react-icons/fa';
+import EditMenuItemForm from '../components/EditMenuItemForm';
+import EditCategoryForm from '../components/EditCategoryForm';
 import '../styles/Admin.css';
 
 const Admin = () => {
@@ -10,6 +13,8 @@ const Admin = () => {
   const [menuItems, setMenuItems] = useState<(MenuItemType & { translations: MenuItemTranslation[] })[]>([]);
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [newItem, setNewItem] = useState({
     category_id: '',
     price: '',
@@ -201,6 +206,32 @@ const Admin = () => {
     fetchCategories();
   };
 
+  const handleEditCategory = (id: string) => {
+    setEditingCategoryId(id);
+  };
+
+  const handleCloseEditCategory = () => {
+    setEditingCategoryId(null);
+  };
+
+  const handleSaveEditCategory = () => {
+    fetchCategories();
+    setEditingCategoryId(null);
+  };
+
+  const handleEditMenuItem = (id: string) => {
+    setEditingItemId(id);
+  };
+
+  const handleCloseEdit = () => {
+    setEditingItemId(null);
+  };
+
+  const handleSaveEdit = () => {
+    fetchMenuItems();
+    setEditingItemId(null);
+  };
+
   const getTranslation = (translations: any[], field: string = 'name') => {
     const translation = translations?.find(t => t.language === i18n.language);
     return translation ? translation[field] : translations?.[0]?.[field] || '';
@@ -215,7 +246,7 @@ const Admin = () => {
         <section className="section">
           <div className="section-header">
             <h2>{t('categories')}</h2>
-            <button className="btn btn-primary" onClick={() => setIsAddingCategory(true)}>
+            <button className="btn btn-primary" onClick={() => setEditingCategoryId('new')}>
               {t('add')}
             </button>
           </div>
@@ -237,12 +268,22 @@ const Admin = () => {
                     </td>
                   ))}
                   <td>
-                    <button
-                      className="btn delete-btn"
-                      onClick={() => handleDeleteCategory(category.id)}
-                    >
-                      {t('delete')}
-                    </button>
+                    <div className="action-buttons">
+                      <button
+                        className="btn-icon edit-btn"
+                        onClick={() => handleEditCategory(category.id)}
+                        title={t('edit')}
+                      >
+                        <FaPencilAlt />
+                      </button>
+                      <button
+                        className="btn-icon delete-btn"
+                        onClick={() => handleDeleteCategory(category.id)}
+                        title={t('delete')}
+                      >
+                        <FaTrash />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -274,14 +315,24 @@ const Admin = () => {
                   <td>
                     {getTranslation(categories.find(c => c.id === item.category_id)?.translations || [])}
                   </td>
-                  <td>€{item.price.toFixed(2)}</td>
+                  <td>{item.price.toLocaleString('sq-AL')} ALL</td>
                   <td>
-                    <button
-                      className="btn delete-btn"
-                      onClick={() => handleDeleteMenuItem(item.id)}
-                    >
-                      {t('delete')}
-                    </button>
+                    <div className="action-buttons">
+                      <button
+                        className="btn-icon edit-btn"
+                        onClick={() => handleEditMenuItem(item.id)}
+                        title={t('edit')}
+                      >
+                        <FaPencilAlt />
+                      </button>
+                      <button
+                        className="btn-icon delete-btn"
+                        onClick={() => handleDeleteMenuItem(item.id)}
+                        title={t('delete')}
+                      >
+                        <FaTrash />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -353,22 +404,25 @@ const Admin = () => {
                   </select>
                 </div>
                 <div>
-                  <label htmlFor="price">{t('price')}</label>
+                  <label htmlFor="price">{t('price')} (ALL)</label>
                   <input
                     id="price"
                     className="form-control"
                     type="number"
-                    step="0.01"
+                    min="100"
+                    max="10000"
+                    step="10"
                     value={newItem.price}
                     onChange={(e) => setNewItem({ ...newItem, price: e.target.value })}
                   />
                 </div>
                 <div>
-                  <label htmlFor="image">Image URL</label>
+                  <label htmlFor="image">{t('image')} URL</label>
                   <input
                     id="image"
                     className="form-control"
                     type="text"
+                    placeholder="https://example.com/image.jpg"
                     value={newItem.image_url}
                     onChange={(e) => setNewItem({ ...newItem, image_url: e.target.value })}
                   />
@@ -421,6 +475,24 @@ const Admin = () => {
               </div>
             </div>
           </div>
+        )}
+
+        {/* Edit Menu Item Form */}
+        {editingItemId && (
+          <EditMenuItemForm
+            itemId={editingItemId}
+            onClose={handleCloseEdit}
+            onSave={handleSaveEdit}
+          />
+        )}
+
+        {/* Edit Category Form */}
+        {editingCategoryId && (
+          <EditCategoryForm
+            categoryId={editingCategoryId === 'new' ? null : editingCategoryId}
+            onClose={handleCloseEditCategory}
+            onSave={handleSaveEditCategory}
+          />
         )}
       </div>
     </div>

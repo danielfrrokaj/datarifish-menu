@@ -156,46 +156,76 @@
 }
 
 .item-price {
-  font-size: 1.125rem;
+  font-size: 1.25rem;
   font-weight: 600;
-  color: #2d3748;
-  margin-bottom: 1rem;
+  color: #2563eb;
+  margin: 0.5rem 0;
 }
 
-.category-actions, .item-actions {
+.item-actions {
   display: flex;
   gap: 0.75rem;
+  align-items: center;
 }
 
-.edit-button, .delete-button {
-  flex: 1;
-  padding: 0.5rem;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
+/* === Action Button Styling === */
+
+/* Container for action buttons */
+.item-actions,
+.category-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+/* Base style for ALL icon buttons */
+.icon-button {
+  display: flex !important; /* Force display type */
+  align-items: center !important;
+  justify-content: center !important;
+  width: 36px !important; /* Force width */
+  height: 36px !important; /* Force height */
+  padding: 0 !important; /* Remove any padding */
+  border-radius: 50% !important; /* Ensure circular */
+  border: none !important;
+  cursor: pointer !important;
   transition: all 0.2s ease;
+  font-size: 1rem !important; /* Icon size */
+  overflow: hidden; /* Ensure no text overflows if accidentally present */
+  text-indent: -9999px; /* Hide text if any still rendered by mistake */
 }
 
-.edit-button {
-  background: #ebf8ff;
-  color: #00C9FF;
-  border: 1px solid #bee3f8;
+.icon-button svg {
+  margin: 0; /* Center icon if it has margins */
+  text-indent: 0; /* Reset text indent for SVG content */
 }
 
-.edit-button:hover {
-  background: #bee3f8;
+.icon-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.delete-button {
-  background: #fff5f5;
-  color: #f56565;
-  border: 1px solid #fed7d7;
+/* Specific styles for Edit icon button */
+.edit-button.icon-button {
+  background: #e0f2fe !important; /* Light blue background */
+  color: #0284c7 !important; /* Blue icon */
 }
 
-.delete-button:hover {
-  background: #fed7d7;
+.edit-button.icon-button:hover {
+  background: #bae6fd !important;
 }
+
+/* Specific styles for Delete icon button */
+.delete-button.icon-button {
+  background: #fee2e2 !important; /* Light red background */
+  color: #dc2626 !important; /* Red icon */
+}
+
+.delete-button.icon-button:hover {
+  background: #fecaca !important;
+}
+
+/* --- End of Action Button Styling --- */
 
 .error-message {
   background: #fff5f5;
@@ -306,27 +336,21 @@
     color: #a0aec0;
   }
 
-  .item-price {
-    color: #f7fafc;
+  .edit-button.icon-button {
+    background: #075985 !important; /* Darker blue for dark mode */
+    color: #e0f2fe !important; /* Lighter icon for dark mode */
   }
 
-  .edit-button {
-    background: #2c5282;
-    color: #90cdf4;
-    border-color: #2a4365;
+  .edit-button.icon-button:hover {
+    background: #0c4a6e !important;
   }
 
-  .edit-button:hover {
-    background: #2a4365;
+  .delete-button.icon-button {
+    background: #7f1d1d !important; /* Darker red for dark mode */
+    color: #fee2e2 !important; /* Lighter icon for dark mode */
   }
 
-  .delete-button {
-    background: #742a2a;
-    color: #feb2b2;
-    border-color: #63171b;
-  }
-
-  .delete-button:hover {
-    background: #63171b;
+  .delete-button.icon-button:hover {
+    background: #991b1b !important;
   }
 } 

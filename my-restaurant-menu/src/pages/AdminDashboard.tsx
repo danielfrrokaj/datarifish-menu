@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { FaTrash, FaPencilAlt, FaPlus } from 'react-icons/fa';
+import EditMenuItemForm from '../components/EditMenuItemForm';
 import '../styles/AdminDashboard.css';
 
 interface Category {
@@ -30,6 +32,7 @@ const AdminDashboard = () => {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
 
   // Fetch categories and their translations
   const fetchCategories = async () => {
@@ -124,6 +127,57 @@ const AdminDashboard = () => {
     navigate('/admin/login');
   };
 
+  const handleEdit = (itemId: string) => {
+    setEditingItemId(itemId);
+  };
+
+  const handleCloseEdit = () => {
+    setEditingItemId(null);
+  };
+
+  const handleSaveEdit = () => {
+    fetchMenuItems();
+    setEditingItemId(null);
+  };
+
+  const handleAddNew = () => {
+    setEditingItemId('new');
+  };
+
+  const handleDelete = async (itemId: string) => {
+    if (!window.confirm('Are you sure you want to delete this item?')) {
+      return;
+    }
+
+    try {
+      // First delete translations
+      const { error: translationsError } = await supabase
+        .from('menu_item_translations')
+        .delete()
+        .eq('menu_item_id', itemId);
+
+      if (translationsError) {
+        throw translationsError;
+      }
+
+      // Then delete the menu item
+      const { error: itemError } = await supabase
+        .from('menu_items')
+        .delete()
+        .eq('id', itemId);
+
+      if (itemError) {
+        throw itemError;
+      }
+
+      // Update local state
+      setMenuItems(prevItems => prevItems.filter(item => item.id !== itemId));
+    } catch (err) {
+      console.error('Error deleting item:', err);
+      setError('Failed to delete item');
+    }
+  };
+
   if (loading) {
     return (
       <div className="admin-dashboard loading">
@@ -167,7 +221,9 @@ const AdminDashboard = () => {
           <div className="categories-section">
             <div className="section-header">
               <h2>Categories</h2>
-              <button className="add-button">Add Category</button>
+              <button className="add-button" /* onClick={() => handleAddCategory()} */ >
+                <FaPlus /> Add Category
+              </button>
             </div>
             <div className="categories-list">
               {categories.map(category => (
@@ -175,14 +231,26 @@ const AdminDashboard = () => {
                   <div className="category-translations">
                     {category.translations.map(translation => (
                       <div key={translation.language} className="translation">
-                        <span className="language">{translation.language}:</span>
+                        <span className="language">{translation.language.toUpperCase()}:</span>
                         <span className="name">{translation.name}</span>
                       </div>
                     ))}
                   </div>
                   <div className="category-actions">
-                    <button className="edit-button">Edit</button>
-                    <button className="delete-button">Delete</button>
+                    <button 
+                      className="edit-button icon-button" 
+                      onClick={() => console.log('Edit category clicked:', category.id)} // Placeholder action
+                      title="Edit category"
+                    >
+                      <FaPencilAlt />
+                    </button>
+                    <button 
+                      className="delete-button icon-button" 
+                      onClick={() => console.log('Delete category clicked:', category.id)} // Placeholder action
+                      title="Delete category"
+                    >
+                      <FaTrash />
+                    </button>
                   </div>
                 </div>
               ))}
@@ -192,13 +260,19 @@ const AdminDashboard = () => {
           <div className="menu-items-section">
             <div className="section-header">
               <h2>Menu Items</h2>
-              <button className="add-button">Add Menu Item</button>
+              <button className="add-button" onClick={handleAddNew}>
+                <FaPlus /> Add Menu Item
+              </button>
             </div>
             <div className="menu-items-list">
               {menuItems.map(item => (
                 <div key={item.id} className="menu-item-card">
                   {item.image_url && (
-                    <img src={item.image_url} alt="" className="item-image" />
+                    <img 
+                      src={item.image_url} 
+                      alt={item.translations[0]?.name || ''} 
+                      className="item-image" 
+                    />
                   )}
                   <div className="item-details">
                     <div className="item-translations">
@@ -212,11 +286,25 @@ const AdminDashboard = () => {
                         </div>
                       ))}
                     </div>
-                    <div className="item-price">€{item.price.toFixed(2)}</div>
+                    <div className="item-price">
+                      {item.price.toLocaleString('sq-AL')} ALL
+                    </div>
                   </div>
                   <div className="item-actions">
-                    <button className="edit-button">Edit</button>
-                    <button className="delete-button">Delete</button>
+                    <button 
+                      className="edit-button icon-button"
+                      onClick={() => handleEdit(item.id)}
+                      title="Edit item"
+                    >
+                      <FaPencilAlt />
+                    </button>
+                    <button 
+                      className="delete-button icon-button"
+                      onClick={() => handleDelete(item.id)}
+                      title="Delete item"
+                    >
+                      <FaTrash />
+                    </button>
                   </div>
                 </div>
               ))}
@@ -224,6 +312,14 @@ const AdminDashboard = () => {
           </div>
         )}
       </div>
+
+      {editingItemId && (
+        <EditMenuItemForm
+          itemId={editingItemId === 'new' ? null : editingItemId}
+          onClose={handleCloseEdit}
+          onSave={handleSaveEdit}
+        />
+      )}
     </div>
   );
 };
