@@ -107,9 +107,30 @@ const App = () => {
                   <span>Detari Fish</span>
                 </div>
                 <p className="footer-text">
+                  <p>
+                    Need a menu like{" "}
+                    <a href="https://danielfrrokaj.com">this</a>?
+                  </p>
                   {t("footer")} - {new Date().getFullYear()}
                 </p>
-                <div className="footer-links"></div>
+                <div className="footer-links">
+                  <select
+                    value={i18n.language}
+                    onChange={(e) => handleLanguageChange(e.target.value)}
+                    style={{
+                      color: "inherit",
+                      minWidth: "60px",
+                      fontSize: window.innerWidth < 600 ? "0.875rem" : "1rem",
+                      border: "none",
+                      background: "transparent",
+                    }}
+                  >
+                    <option value="en">EN</option>
+                    <option value="al">AL</option>
+                    <option value="it">IT</option>
+                  </select>
+                </div>
+                <p className="footerText"></p>
               </div>
             </div>
           </footer>
