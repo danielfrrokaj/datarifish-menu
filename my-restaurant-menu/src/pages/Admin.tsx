@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Category, CategoryTranslation, MenuItemType, MenuItemTranslation, Language } from '../lib/supabase';
 import { supabase } from '../lib/supabase';
-import { FaTrash, FaPencilAlt} from 'react-icons/fa';
+import { FaTrash, FaPencilAlt, FaArrowUp, FaArrowDown } from 'react-icons/fa';
 import EditMenuItemForm from '../components/EditMenuItemForm';
 import EditCategoryForm from '../components/EditCategoryForm';
 import '../styles/Admin.css';
@@ -19,6 +19,7 @@ const Admin = () => {
     category_id: '',
     price: '',
     image_url: '',
+    availability: true,
     translations: {
       en: { name: '', description: '' },
       al: { name: '', description: '' },
@@ -26,6 +27,8 @@ const Admin = () => {
     },
   });
   const [newCategory, setNewCategory] = useState({
+    image_url: '',
+    order_index: 0,
     translations: {
       en: { name: '' },
       al: { name: '' },
@@ -45,19 +48,27 @@ const Admin = () => {
         id,
         created_at,
         updated_at,
+        image_url,
+        order_index,
         translations:category_translations (
           id,
           category_id,
           language,
           name
         )
-      `);
+      `)
+      .order('order_index', { ascending: true, nullsFirst: false });
     
     if (error) {
       console.error('Error fetching categories:', error);
       return;
     }
-    setCategories(data || []);
+    const sortedData = (data || []).sort((a, b) => {
+        const orderA = a.order_index === null || a.order_index === undefined ? Infinity : a.order_index;
+        const orderB = b.order_index === null || b.order_index === undefined ? Infinity : b.order_index;
+        return orderA - orderB;
+    });
+    setCategories(sortedData);
   };
 
   const fetchMenuItems = async () => {
@@ -68,6 +79,7 @@ const Admin = () => {
         category_id,
         price,
         image_url,
+        availability,
         created_at,
         updated_at,
         translations:menu_item_translations (
@@ -87,9 +99,16 @@ const Admin = () => {
   };
 
   const handleAddCategory = async () => {
+    const nextOrderIndex = categories.length > 0 
+      ? Math.max(...categories.map(c => c.order_index || 0)) + 1 
+      : 0;
+
     const { data: category, error: categoryError } = await supabase
       .from('categories')
-      .insert([{}])
+      .insert([{ 
+        image_url: newCategory.image_url || null,
+        order_index: nextOrderIndex
+      }])
       .select()
       .single();
 
@@ -114,21 +133,33 @@ const Admin = () => {
     }
 
     setIsAddingCategory(false);
+    setNewCategory({
+      image_url: '',
+      order_index: 0,
+      translations: {
+        en: { name: '' },
+        al: { name: '' },
+        it: { name: '' },
+      },
+    });
     fetchCategories();
   };
 
   const handleAddMenuItem = async () => {
-    if (!newItem.category_id || !newItem.price) {
-      console.error('Category and price are required');
+    if (!newItem.category_id) {
+      console.error('Category is required');
       return;
     }
+
+    const priceValue = newItem.price.trim() === '' ? null : parseFloat(newItem.price);
 
     const { data: menuItem, error: menuItemError } = await supabase
       .from('menu_items')
       .insert([{
         category_id: newItem.category_id,
-        price: parseFloat(newItem.price),
+        price: priceValue,
         image_url: newItem.image_url || null,
+        availability: newItem.availability,
       }])
       .select()
       .single();
@@ -169,6 +200,7 @@ const Admin = () => {
       category_id: '',
       price: '',
       image_url: '',
+      availability: true,
       translations: {
         en: { name: '', description: '' },
         al: { name: '', description: '' },
@@ -232,9 +264,77 @@ const Admin = () => {
     setEditingItemId(null);
   };
 
-  const getTranslation = (translations: any[], field: string = 'name') => {
-    const translation = translations?.find(t => t.language === i18n.language);
-    return translation ? translation[field] : translations?.[0]?.[field] || '';
+  const getTranslation = (translations: any[], field: string = 'name', preferredLang: string = 'al', fallbackLang1: string = 'en') => {
+    if (!translations || translations.length === 0) return '';
+    let translation = translations.find(t => t.language === preferredLang);
+    if (!translation || !translation[field]) {
+      translation = translations.find(t => t.language === fallbackLang1);
+    }
+    if (!translation || !translation[field]) {
+      translation = translations.find(t => t.language === i18n.language);
+    }
+    if (!translation || !translation[field]) {
+      translation = translations[0];
+    }
+    return translation ? translation[field] : '';
+  };
+
+  const handleToggleAvailability = async (itemId: string, currentAvailability: boolean) => {
+    const { data, error } = await supabase
+      .from('menu_items')
+      .update({ availability: !currentAvailability })
+      .eq('id', itemId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error toggling availability:', error);
+      // Potentially set an error state to show in UI
+      return;
+    }
+
+    if (data) {
+      setMenuItems(prevItems =>
+        prevItems.map(item =>
+          item.id === itemId ? { ...item, availability: data.availability } : item
+        )
+      );
+    }
+  };
+
+  const handleMoveCategory = async (categoryId: string, direction: 'up' | 'down') => {
+    const currentIndex = categories.findIndex(c => c.id === categoryId);
+    if (currentIndex === -1) return;
+
+    const currentCategory = categories[currentIndex];
+    let targetIndex = -1;
+
+    if (direction === 'up') {
+      if (currentIndex === 0) return; // Already at the top
+      targetIndex = currentIndex - 1;
+    } else {
+      if (currentIndex === categories.length - 1) return; // Already at the bottom
+      targetIndex = currentIndex + 1;
+    }
+
+    const targetCategory = categories[targetIndex];
+
+    if (!currentCategory || !targetCategory) return;
+
+    // Swap order_index values
+    const updates = [
+      supabase.from('categories').update({ order_index: targetCategory.order_index }).eq('id', currentCategory.id),
+      supabase.from('categories').update({ order_index: currentCategory.order_index }).eq('id', targetCategory.id)
+    ];
+
+    const results = await Promise.all(updates);
+    const errors = results.map(res => res.error).filter(Boolean);
+
+    if (errors.length > 0) {
+      errors.forEach(err => console.error('Error moving category:', err));
+    } else {
+      fetchCategories(); // Re-fetch to update UI based on new order
+    }
   };
 
   return (
@@ -260,7 +360,7 @@ const Admin = () => {
               </tr>
             </thead>
             <tbody>
-              {categories.map((category) => (
+              {categories.map((category, index) => (
                 <tr key={category.id}>
                   {(['en', 'al', 'it'] as Language[]).map((lang) => (
                     <td key={lang}>
@@ -269,6 +369,22 @@ const Admin = () => {
                   ))}
                   <td>
                     <div className="action-buttons">
+                      <button
+                        className="btn-icon move-btn"
+                        onClick={() => handleMoveCategory(category.id, 'up')}
+                        disabled={index === 0}
+                        title={t('move_up', 'Move Up')}
+                      >
+                        <FaArrowUp />
+                      </button>
+                      <button
+                        className="btn-icon move-btn"
+                        onClick={() => handleMoveCategory(category.id, 'down')}
+                        disabled={index === categories.length - 1}
+                        title={t('move_down', 'Move Down')}
+                      >
+                        <FaArrowDown />
+                      </button>
                       <button
                         className="btn-icon edit-btn"
                         onClick={() => handleEditCategory(category.id)}
@@ -305,17 +421,37 @@ const Admin = () => {
                 <th>Name</th>
                 <th>Category</th>
                 <th>Price</th>
+                <th>Availability</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {menuItems.map((item) => (
                 <tr key={item.id}>
-                  <td>{getTranslation(item.translations)}</td>
+                  <td>{getTranslation(item.translations, 'name', 'al', 'en')}</td>
                   <td>
-                    {getTranslation(categories.find(c => c.id === item.category_id)?.translations || [])}
+                    {getTranslation(categories.find(c => c.id === item.category_id)?.translations || [], 'name', 'al', 'en')}
                   </td>
-                  <td>{item.price.toLocaleString('sq-AL')} ALL</td>
+                  <td>
+                    {item.price !== null && item.price !== undefined 
+                      ? `${item.price.toLocaleString('sq-AL')} ALL` 
+                      : t('price_not_set', 'N/A')}
+                  </td>
+                  <td>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span className={item.availability ? 'status-available' : 'status-unavailable'}>
+                        {item.availability ? 'Available' : 'Unavailable'}
+                      </span>
+                      <label className="toggle-switch" title={item.availability ? 'Mark as Unavailable' : 'Mark as Available'}>
+                        <input 
+                          type="checkbox" 
+                          checked={item.availability}
+                          onChange={() => handleToggleAvailability(item.id, item.availability)}
+                        />
+                        <span className="toggle-slider"></span>
+                      </label>
+                    </div>
+                  </td>
                   <td>
                     <div className="action-buttons">
                       <button
@@ -348,6 +484,17 @@ const Admin = () => {
                 <h2 className="dialog-title">{t('add')} {t('categories')}</h2>
               </div>
               <div className="form-grid">
+                <div>
+                  <label htmlFor="category-image-url">{t('category_image_url', 'Image URL')}</label>
+                  <input
+                    id="category-image-url"
+                    className="form-control"
+                    type="text"
+                    placeholder="https://example.com/image.jpg"
+                    value={newCategory.image_url}
+                    onChange={(e) => setNewCategory({ ...newCategory, image_url: e.target.value })}
+                  />
+                </div>
                 {(['en', 'al', 'it'] as Language[]).map((lang) => (
                   <div key={lang}>
                     <label htmlFor={`category-name-${lang}`}>Name ({lang.toUpperCase()})</label>
@@ -382,7 +529,10 @@ const Admin = () => {
         {/* Add Menu Item Dialog */}
         {isAddingItem && (
           <div className="dialog">
-            <div className="dialog-content">
+            <div 
+              className="dialog-content" 
+              style={{ backgroundColor: '#1a202c', color: '#f7fafc' }}
+            >
               <div className="dialog-header">
                 <h2 className="dialog-title">{t('add')} {t('items')}</h2>
               </div>
@@ -394,8 +544,9 @@ const Admin = () => {
                     className="form-control"
                     value={newItem.category_id}
                     onChange={(e) => setNewItem({ ...newItem, category_id: e.target.value })}
+                    required
                   >
-                    <option value="">Select a category</option>
+                    <option value="">{t('select_category', 'Select a category')}</option>
                     {categories.map((category) => (
                       <option key={category.id} value={category.id}>
                         {getTranslation(category.translations)}
@@ -427,9 +578,21 @@ const Admin = () => {
                     onChange={(e) => setNewItem({ ...newItem, image_url: e.target.value })}
                   />
                 </div>
+                <div>
+                  <label htmlFor="item-availability">{t('availability', 'Availability')}</label>
+                  <label className="toggle-switch" title={newItem.availability ? 'Set as Unavailable' : 'Set as Available'} style={{ marginTop: '8px' }}>
+                    <input
+                      id="item-availability"
+                      type="checkbox"
+                      checked={newItem.availability}
+                      onChange={(e) => setNewItem({ ...newItem, availability: e.target.checked })}
+                    />
+                    <span className="toggle-slider"></span>
+                  </label>
+                </div>
                 {(['en', 'al', 'it'] as Language[]).map((lang) => (
-                  <div key={lang} className="language-section">
-                    <h3>Translation ({lang.toUpperCase()})</h3>
+                  <div key={lang} className="language-input-group">
+                    <h3 className="language-group-title">{t(`language_${lang}_translation`, `Translation (${lang.toUpperCase()})`)}</h3>
                     <div className="form-group">
                       <label htmlFor={`name-${lang}`}>Name</label>
                       <input
@@ -444,6 +607,11 @@ const Admin = () => {
                             [lang]: { ...newItem.translations[lang], name: e.target.value },
                           },
                         })}
+                        style={{ 
+                          backgroundColor: 'var(--dark-input-bg, #2d3748)', 
+                          color: 'var(--dark-text, #f7fafc)',
+                          borderColor: 'var(--dark-border, #4a5568)'
+                        }}
                       />
                     </div>
                     <div className="form-group">
@@ -460,13 +628,26 @@ const Admin = () => {
                             [lang]: { ...newItem.translations[lang], description: e.target.value },
                           },
                         })}
+                        style={{ 
+                          backgroundColor: 'var(--dark-input-bg, #2d3748)', 
+                          color: 'var(--dark-text, #f7fafc)',
+                          borderColor: 'var(--dark-border, #4a5568)' 
+                        }}
                       />
                     </div>
                   </div>
                 ))}
               </div>
               <div className="dialog-actions">
-                <button className="btn" onClick={() => setIsAddingItem(false)}>
+                <button 
+                  className="btn" 
+                  onClick={() => setIsAddingItem(false)}
+                  style={{
+                    backgroundColor: 'var(--dark-input-bg, #2d3748)',
+                    color: 'var(--dark-text, #f7fafc)',
+                    borderColor: 'var(--dark-border, #4a5568)'
+                  }}
+                >
                   {t('cancel')}
                 </button>
                 <button className="btn btn-primary" onClick={handleAddMenuItem}>

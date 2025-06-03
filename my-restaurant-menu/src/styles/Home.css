@@ -203,3 +203,79 @@
         padding: var(--spacing-md);
     }
 }
+
+/* About Us Section Styles for Home Page */
+.about-us-section.home-about-us {
+  padding: var(--spacing-xl) 0; /* Vertical padding, container handles horizontal */
+  margin-top: var(--spacing-xxl); /* More margin to separate from features */
+  text-align: center;
+  background-color: var(--background-light, #f8f9fa); /* Light background for distinction */
+  border-top: 1px solid var(--border-color, #e2e8f0);
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+}
+
+.about-us-section.home-about-us h2 {
+  font-size: clamp(1.8rem, 3vw, 2.5rem); /* Responsive font size */
+  color: var(--primary-color);
+  margin-bottom: var(--spacing-lg);
+}
+
+.about-us-section.home-about-us p {
+  font-size: clamp(1rem, 1.5vw, 1.15rem); /* Slightly larger base for readability */
+  color: var(--text-color, #333);
+  line-height: 1.75;
+  max-width: 750px; /* Max width for readability */
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: var(--spacing-md);
+}
+
+.about-us-section.home-about-us p:last-child {
+  margin-bottom: 0;
+}
+
+/* Home Image Gallery Styles */
+.home-image-gallery {
+  padding: var(--spacing-xl) 0;
+  /* background-color: var(--white); Optional: if you want a different bg for this section */
+}
+
+.home-image-gallery .container {
+  display: flex;
+  flex-direction: row; /* Default: side-by-side for desktop */
+  justify-content: space-around; /* Distribute space around images */
+  align-items: center; /* Align items vertically */
+  gap: var(--spacing-lg); /* Gap between images on desktop */
+}
+
+.gallery-image {
+  width: 100%; /* Take full width of its flex item container */
+  max-width: 48%; /* Each image takes slightly less than half on desktop to allow for gap */
+  height: auto; /* Maintain aspect ratio */
+  border-radius: var(--border-radius-large);
+  box-shadow: var(--shadow-elevation-medium);
+  object-fit: cover; /* Ensures the image covers the area, might crop */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.gallery-image:hover {
+  transform: scale(1.03);
+  box-shadow: var(--shadow-elevation-high);
+}
+
+/* Responsive adjustments for mobile */
+@media (max-width: 768px) {
+  /* ... existing media query content for Home.css ... */
+
+  .home-image-gallery .container {
+    flex-direction: column; /* Stack images vertically on mobile */
+    gap: var(--spacing-lg); /* Maintain gap between stacked images */
+  }
+
+  .gallery-image {
+    max-width: 90%; /* Allow images to be larger on mobile, centered by container */
+    /* Or max-width: 100%; if you want them to span the full container width */
+  }
+}
+
+/* ... any further existing media queries for Home.css ... */

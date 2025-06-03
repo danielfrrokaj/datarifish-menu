@@ -16,6 +16,7 @@ interface Translation {
 
 interface Category {
   id: string;
+  image_url: string;
   translations: Translation[];
 }
 
@@ -26,6 +27,7 @@ const EditCategoryForm = ({ categoryId, onClose, onSave }: EditCategoryFormProps
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState<Category>({
     id: '',
+    image_url: '',
     translations: SUPPORTED_LANGUAGES.map(lang => ({
       language: lang,
       name: ''
@@ -49,7 +51,7 @@ const EditCategoryForm = ({ categoryId, onClose, onSave }: EditCategoryFormProps
 
       const { data: categoryData, error: categoryError } = await supabase
         .from('categories')
-        .select('*')
+        .select('id, image_url')
         .eq('id', categoryId)
         .single();
 
@@ -73,6 +75,7 @@ const EditCategoryForm = ({ categoryId, onClose, onSave }: EditCategoryFormProps
 
       setFormData({
         id: categoryData.id,
+        image_url: categoryData.image_url || '',
         translations
       });
     } catch (err) {
@@ -88,17 +91,29 @@ const EditCategoryForm = ({ categoryId, onClose, onSave }: EditCategoryFormProps
     setError(null);
 
     try {
-      // For a new category, create it first
-      if (!categoryId) {
+      let categoryIdToUse = categoryId;
+
+      // For a new category (categoryId is null), create it first
+      if (!categoryIdToUse) {
         const { data: newCategory, error: categoryError } = await supabase
           .from('categories')
-          .insert([{}])
+          .insert([{ 
+            image_url: formData.image_url || null 
+          }])
           .select('id')
           .single();
 
         if (categoryError) throw categoryError;
-        
-        formData.id = newCategory.id;
+        categoryIdToUse = newCategory.id;
+        // Update formData.id for translation association, though not strictly needed if re-fetching
+        setFormData(prev => ({...prev, id: newCategory.id!})); 
+      } else {
+        // If it's an existing category, update its image_url
+        const { error: updateError } = await supabase
+          .from('categories')
+          .update({ image_url: formData.image_url || null })
+          .eq('id', categoryIdToUse);
+        if (updateError) throw updateError;
       }
 
       // Update translations
@@ -108,7 +123,7 @@ const EditCategoryForm = ({ categoryId, onClose, onSave }: EditCategoryFormProps
         const { error: translationError } = await supabase
           .from('category_translations')
           .upsert({
-            category_id: formData.id,
+            category_id: categoryIdToUse, // Use the potentially new categoryIdToUse
             language: translation.language,
             name: translation.name
           }, {
@@ -147,6 +162,17 @@ const EditCategoryForm = ({ categoryId, onClose, onSave }: EditCategoryFormProps
         )}
 
         <form onSubmit={handleSubmit} className="edit-form">
+          <div className="form-section">
+            <label htmlFor="category-image-url-edit">Image URL</label>
+            <input
+              id="category-image-url-edit"
+              type="text"
+              placeholder="https://example.com/image.jpg"
+              value={formData.image_url}
+              onChange={e => setFormData(prev => ({ ...prev, image_url: e.target.value }))}
+              className="form-control-fullwidth"
+            />
+          </div>
           <div className="form-section">
             <div className="section-header">
               <FaLanguage />

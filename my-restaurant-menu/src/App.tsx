@@ -107,10 +107,11 @@ const App = () => {
                   <span>Detari Fish</span>
                 </div>
                 <p className="footer-text">
-                  <p>
+                  <span>
                     Need a menu like{" "}
                     <a href="https://danielfrrokaj.com">this</a>?
-                  </p>
+                  </span>
+                  <br />
                   {t("footer")} - {new Date().getFullYear()}
                 </p>
                 <div className="footer-links">

@@ -53,6 +53,36 @@ const Home = () => {
           </div>
         </div>
       </section>
+
+      {/* About Us Section */}
+      <section className="about-us-section home-about-us">
+        <div className="container">
+          <h2>{t('about_us_title', 'About Us')}</h2>
+          <p>
+            {t('about_us_para1', 'Our menu is updated in real-time, almost every day, based on what fresh ingredients we have in stock. We pride ourselves on serving the freshest catch.')}
+          </p>
+          <p>
+            {t('about_us_para2', 'The fish we serve is sustainably sourced, fished from the Ionian and Adriatic seas by dedicated local fishermen, ensuring quality and supporting our community.')}
+          </p>
+        </div>
+      </section>
+
+      {/* Image Gallery Section */}
+      <section className="home-image-gallery">
+        <div className="container">
+          <img 
+            src="https://media.istockphoto.com/id/454307021/photo/fishing.jpg?s=612x612&w=0&k=20&c=_ySgI980LovX9D3TGx-gYjRo_Dt6pPABgGnyGjQWE0Q=" 
+            alt={t('fishing_image_alt_1', 'Fishing gear on a boat')} 
+            className="gallery-image"
+          />
+          <img 
+            src="https://media.istockphoto.com/id/1137792584/photo/small-fishing-boat-on-the-sea.jpg?s=612x612&w=0&k=20&c=i9E26DdHFqyx_BupzAveh5BV4rdLSCVj2vUmIjswTUo=" 
+            alt={t('fishing_image_alt_2', 'Small fishing boat on the sea')} 
+            className="gallery-image"
+          />
+        </div>
+      </section>
+
     </div>
   );
 };

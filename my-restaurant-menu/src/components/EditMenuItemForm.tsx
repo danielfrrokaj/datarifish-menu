@@ -18,8 +18,9 @@ interface Translation {
 interface MenuItem {
   id: string;
   category_id: string;
-  price: number;
+  price: number | null;
   image_url: string | null;
+  availability: boolean;
   translations: Translation[];
 }
 
@@ -32,8 +33,9 @@ const EditMenuItemForm = ({ itemId, onClose, onSave }: EditMenuItemFormProps) =>
   const [formData, setFormData] = useState<MenuItem>({
     id: '',
     category_id: '',
-    price: 0,
+    price: null,
     image_url: null,
+    availability: true,
     translations: SUPPORTED_LANGUAGES.map(lang => ({
       language: lang,
       name: '',
@@ -97,6 +99,7 @@ const EditMenuItemForm = ({ itemId, onClose, onSave }: EditMenuItemFormProps) =>
         category_id: itemData.category_id,
         price: itemData.price,
         image_url: itemData.image_url,
+        availability: itemData.availability,
         translations
       });
     } catch (err) {
@@ -113,16 +116,31 @@ const EditMenuItemForm = ({ itemId, onClose, onSave }: EditMenuItemFormProps) =>
 
     try {
       // Update menu item
-      const { error: itemError } = await supabase
-        .from('menu_items')
-        .update({
-          category_id: formData.category_id,
-          price: formData.price,
-          image_url: formData.image_url
-        })
-        .eq('id', formData.id);
+      const itemPayload = {
+        category_id: formData.category_id,
+        price: formData.price,
+        image_url: formData.image_url,
+        availability: formData.availability
+      };
 
-      if (itemError) throw itemError;
+      if (itemId) {
+        const { error: itemError } = await supabase
+          .from('menu_items')
+          .update(itemPayload)
+          .eq('id', formData.id);
+        if (itemError) throw itemError;
+      } else {
+        const { data: newItemData, error: newItemError } = await supabase
+          .from('menu_items')
+          .insert([itemPayload])
+          .select('id')
+          .single();
+
+        if (newItemError) throw newItemError;
+        if (!newItemData) throw new Error("Failed to create new item or retrieve its ID.");
+        
+        formData.id = newItemData.id;
+      }
 
       // Update translations
       for (const translation of formData.translations) {
@@ -243,15 +261,17 @@ const EditMenuItemForm = ({ itemId, onClose, onSave }: EditMenuItemFormProps) =>
             </div>
             <input
               type="number"
-              value={formData.price}
-              onChange={e => setFormData(prev => ({
-                ...prev,
-                price: parseFloat(e.target.value)
-              }))}
-              min="100"
-              max="10000"
+              placeholder="Enter price (e.g., 500)"
+              value={formData.price === null ? '' : formData.price}
+              onChange={e => {
+                const val = e.target.value;
+                setFormData(prev => ({ 
+                  ...prev, 
+                  price: val === '' ? null : Number(val)
+                }));
+              }}
+              min="0"
               step="10"
-              required
             />
           </div>
 
@@ -278,6 +298,24 @@ const EditMenuItemForm = ({ itemId, onClose, onSave }: EditMenuItemFormProps) =>
                 }))}
                 className="form-control"
               />
+            </div>
+          </div>
+
+          <div className="form-section">
+            <div className="section-header">
+              <h3>Availability</h3>
+            </div>
+            <div className="form-control-checkbox">
+              <input
+                type="checkbox"
+                id="availability-checkbox"
+                checked={formData.availability}
+                onChange={e => setFormData(prev => ({
+                  ...prev,
+                  availability: e.target.checked
+                }))}
+              />
+              <label htmlFor="availability-checkbox">Available</label>
             </div>
           </div>
 

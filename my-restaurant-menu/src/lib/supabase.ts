@@ -46,6 +46,8 @@ export interface Category {
   id: string;
   created_at: string;
   updated_at: string;
+  image_url?: string | null;
+  order_index?: number | null;
 }
 
 export interface CategoryTranslation {
@@ -62,6 +64,7 @@ export interface MenuItemType {
   image_url: string | null;
   created_at: string;
   updated_at: string;
+  availability: boolean;
 }
 
 export interface MenuItemTranslation {

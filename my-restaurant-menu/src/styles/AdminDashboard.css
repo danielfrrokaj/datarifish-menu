@@ -162,6 +162,25 @@
   margin: 0.5rem 0;
 }
 
+.item-availability {
+  font-size: 0.875rem;
+  color: #4a5568; /* Tailwind gray-600 */
+  margin-top: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  display: inline-block; /* So background applies correctly */
+}
+
+.item-availability .available-status {
+  color: #059669; /* Tailwind green-600 */
+  font-weight: 500;
+}
+
+.item-availability .unavailable-status {
+  color: #dc2626; /* Tailwind red-600 */
+  font-weight: 500;
+}
+
 .item-actions {
   display: flex;
   gap: 0.75rem;
@@ -223,6 +242,56 @@
 
 .delete-button.icon-button:hover {
   background: #fecaca !important;
+}
+
+/* Toggle Switch for Availability */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 50px; /* Width of the toggle */
+  height: 28px; /* Height of the toggle */
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc; /* Default background (unavailable) */
+  transition: .4s;
+  border-radius: 28px; /* Make it rounded */
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 20px; /* Size of the circle */
+  width: 20px;  /* Size of the circle */
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+  background-color: #2563eb; /* Blue background when available */
+}
+
+input:focus + .toggle-slider {
+  box-shadow: 0 0 1px #2563eb;
+}
+
+input:checked + .toggle-slider:before {
+  transform: translateX(22px); /* Move circle to the right */
 }
 
 /* --- End of Action Button Styling --- */

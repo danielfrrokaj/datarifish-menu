@@ -18,6 +18,7 @@ interface MenuItem {
   category_id: string;
   price: number;
   image_url: string | null;
+  availability: boolean;
   translations: {
     language: string;
     name: string;
@@ -101,6 +102,48 @@ const AdminDashboard = () => {
     }));
 
     setMenuItems(itemsWithTranslations);
+  };
+
+  // Helper function to get the desired translation
+  const getDisplayTranslation = (translations: MenuItem['translations'], preferredLang: string = 'al', fallbackLang: string = 'en') => {
+    if (!translations || translations.length === 0) {
+      return { name: 'No name', description: 'No description' };
+    }
+    let translation = translations.find(t => t.language === preferredLang);
+    if (!translation) {
+      translation = translations.find(t => t.language === fallbackLang);
+    }
+    if (!translation) {
+      translation = translations[0];
+    }
+    return {
+      name: translation?.name || 'Name not available',
+      description: translation?.description || 'Description not available'
+    };
+  };
+
+  // Function to toggle availability
+  const handleToggleAvailability = async (itemId: string, currentAvailability: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('menu_items')
+        .update({ availability: !currentAvailability })
+        .eq('id', itemId);
+
+      if (error) {
+        throw error;
+      }
+
+      // Update local state
+      setMenuItems(prevItems =>
+        prevItems.map(item =>
+          item.id === itemId ? { ...item, availability: !currentAvailability } : item
+        )
+      );
+    } catch (err) {
+      console.error('Error toggling availability:', err);
+      setError('Failed to update availability');
+    }
   };
 
   useEffect(() => {
@@ -265,49 +308,61 @@ const AdminDashboard = () => {
               </button>
             </div>
             <div className="menu-items-list">
-              {menuItems.map(item => (
-                <div key={item.id} className="menu-item-card">
-                  {item.image_url && (
-                    <img 
-                      src={item.image_url} 
-                      alt={item.translations[0]?.name || ''} 
-                      className="item-image" 
-                    />
-                  )}
-                  <div className="item-details">
-                    <div className="item-translations">
-                      {item.translations.map(translation => (
-                        <div key={translation.language} className="translation">
-                          <span className="language">{translation.language}:</span>
-                          <span className="name">{translation.name}</span>
-                          {translation.description && (
-                            <p className="description">{translation.description}</p>
-                          )}
-                        </div>
-                      ))}
+              {menuItems.map(item => {
+                const display = getDisplayTranslation(item.translations, 'al', 'en');
+                return (
+                  <div key={item.id} className="menu-item-card">
+                    {item.image_url && (
+                      <img 
+                        src={item.image_url} 
+                        alt={display.name}
+                        className="item-image" 
+                      />
+                    )}
+                    <div className="item-details">
+                      <h3 className="item-name">{display.name}</h3>
+                      {display.description && display.description !== 'Description not available' && (
+                        <p className="item-description-admin">{display.description}</p>
+                      )}
+                      <div className="item-price">
+                        {item.price.toLocaleString('sq-AL')} ALL
+                      </div>
+                      <div className="item-availability">
+                        Status: 
+                        {item.availability ? (
+                          <span className="available-status">Available</span>
+                        ) : (
+                          <span className="unavailable-status">Unavailable</span>
+                        )}
+                      </div>
                     </div>
-                    <div className="item-price">
-                      {item.price.toLocaleString('sq-AL')} ALL
+                    <div className="item-actions">
+                      <button
+                        className="edit-button icon-button"
+                        onClick={() => handleEdit(item.id)}
+                        title="Edit item"
+                      >
+                        <FaPencilAlt />
+                      </button>
+                      <button
+                        className="delete-button icon-button"
+                        onClick={() => handleDelete(item.id)}
+                        title="Delete item"
+                      >
+                        <FaTrash />
+                      </button>
+                      <label className="toggle-switch" title={item.availability ? 'Mark as Unavailable' : 'Mark as Available'}>
+                        <input 
+                          type="checkbox" 
+                          checked={item.availability}
+                          onChange={() => handleToggleAvailability(item.id, item.availability)}
+                        />
+                        <span className="toggle-slider"></span>
+                      </label>
                     </div>
                   </div>
-                  <div className="item-actions">
-                    <button 
-                      className="edit-button icon-button"
-                      onClick={() => handleEdit(item.id)}
-                      title="Edit item"
-                    >
-                      <FaPencilAlt />
-                    </button>
-                    <button 
-                      className="delete-button icon-button"
-                      onClick={() => handleDelete(item.id)}
-                      title="Delete item"
-                    >
-                      <FaTrash />
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}

@@ -37,7 +37,8 @@ const Menu = () => {
       console.log('Fetching categories...');
       const { data: categoriesData, error: categoriesError } = await supabase
         .from('categories')
-        .select('*, category_translations(*)');
+        .select('*, order_index, category_translations(*)')
+        .order('order_index', { ascending: true, nullsFirst: false });
 
       if (categoriesError) {
         console.error('Error details:', categoriesError);
@@ -52,7 +53,13 @@ const Menu = () => {
       }
 
       console.log('Categories fetched successfully:', categoriesData);
-      setCategories(categoriesData);
+      // Sort categories ensuring that null/undefined order_index values are handled consistently
+      const sortedData = (categoriesData || []).sort((a, b) => {
+        const orderA = a.order_index === null || a.order_index === undefined ? Infinity : a.order_index;
+        const orderB = b.order_index === null || b.order_index === undefined ? Infinity : b.order_index;
+        return orderA - orderB;
+      });
+      setCategories(sortedData);
       setError(null);
     } catch (err) {
       console.error('Unexpected error during fetch:', err);
@@ -158,6 +165,13 @@ const Menu = () => {
                 <h2 className="category-title">
                   {getCategoryTranslation(category.category_translations)}
                 </h2>
+                {category.image_url && (
+                  <img 
+                    src={category.image_url} 
+                    alt={getCategoryTranslation(category.category_translations)} 
+                    className="category-image" 
+                  />
+                )}
               </div>
             ))}
           </div>
@@ -199,7 +213,12 @@ const Menu = () => {
         <div className="container">
           <div className="menu-grid">
             {menuItems.map((item) => (
-              <div className="menu-item" key={item.id}>
+              <div className={`menu-item ${!item.availability ? 'unavailable' : ''}`} key={item.id}>
+                {!item.availability && (
+                  <div className="availability-overlay">
+                    <span>{t('out_of_stock')}</span>
+                  </div>
+                )}
                 {item.image_url !== null && (
                   <img
                     className="menu-item-image"
@@ -214,9 +233,11 @@ const Menu = () => {
                   <p className="menu-item-description">
                     {getMenuItemTranslation(item.menu_item_translations, 'description')}
                   </p>
-                  <p className="menu-item-price">
-                    {item.price.toLocaleString('sq-AL')} ALL
-                  </p>
+                  {item.price !== null && item.price !== undefined && (
+                    <p className="menu-item-price">
+                      {item.price.toLocaleString('sq-AL')} ALL
+                    </p>
+                  )}
                 </div>
               </div>
             ))}
