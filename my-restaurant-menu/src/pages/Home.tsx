@@ -4,10 +4,18 @@ import "../styles/Home.css";
 import card1 from "../assets/card1.jpg";
 import card2 from "../assets/card2.jpg";
 import card3 from "../assets/card3.jpg";
+import { useState } from "react";
 
 const Home = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
+
+  const handleLanguageSelect = (lang: string) => {
+    i18n.changeLanguage(lang);
+    setShowLanguageModal(false);
+    navigate("/menu");
+  };
 
   return (
     <div>
@@ -16,7 +24,7 @@ const Home = () => {
         <div className="container">
           <h1>{t("welcome")}</h1>
           <h2>{t("slogan")}</h2>
-          <button className="hero-btn" onClick={() => navigate("/menu")}>
+          <button className="hero-btn" onClick={() => setShowLanguageModal(true)}>
             {t("menu")}
           </button>
         </div>
@@ -82,6 +90,19 @@ const Home = () => {
           />
         </div>
       </section>
+
+      {/* Language Selection Modal */}
+      {showLanguageModal && (
+        <div className="language-modal-backdrop">
+          <div className="language-modal-content">
+            <h3>{t('select_language', 'Select Language')}</h3>
+            <button onClick={() => handleLanguageSelect('al')}>🇦🇱 {t('language_al', 'Shqip')}</button>
+            <button onClick={() => handleLanguageSelect('en')}>🇬🇧 {t('language_en', 'English')}</button>
+            <button onClick={() => handleLanguageSelect('it')}>🇮🇹 {t('language_it', 'Italiano')}</button>
+            <button className="cancel-btn" onClick={() => setShowLanguageModal(false)}>{t('cancel', 'Cancel')}</button>
+          </div>
+        </div>
+      )}
 
     </div>
   );

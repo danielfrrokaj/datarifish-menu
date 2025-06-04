@@ -261,9 +261,10 @@
 }
 
 .category-card {
-  background-color: var(--card-bg);
-  padding: 24px;
-  border-radius: var(--border-radius-large);
+  background-color: var(--white);
+  background: linear-gradient(to bottom, #e6f7ff, #cceeff);
+  border-radius: var(--border-radius-xl);
+  padding: var(--spacing-lg);
   text-align: center;
   cursor: pointer;
   transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
