@@ -35,6 +35,8 @@ const Admin = () => {
       it: { name: '' },
     },
   });
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState(''); // '' for All
 
   useEffect(() => {
     fetchCategories();
@@ -264,19 +266,53 @@ const Admin = () => {
     setEditingItemId(null);
   };
 
-  const getTranslation = (translations: any[], field: string = 'name', preferredLang: string = 'al', fallbackLang1: string = 'en') => {
-    if (!translations || translations.length === 0) return '';
-    let translation = translations.find(t => t.language === preferredLang);
-    if (!translation || !translation[field]) {
-      translation = translations.find(t => t.language === fallbackLang1);
+  const getTranslation = (
+    translations: CategoryTranslation[] | MenuItemTranslation[] | undefined,
+    field: 'name' | 'description' = 'name',
+    // Use i18n.language as a dynamic preferredLang, then specific fallbacks
+    preferredLangOverride?: string, 
+    fallbackLang1: string = 'en',
+    fallbackLang2: string = 'it'
+  ): string | undefined => {
+    if (!translations || translations.length === 0) {
+      return undefined;
     }
-    if (!translation || !translation[field]) {
-      translation = translations.find(t => t.language === i18n.language);
+    // Order of preference:
+    // 1. Overridden preferred language (if provided)
+    // 2. Current i18n language
+    // 3. Default 'al' (original primary)
+    // 4. Fallback 'en'
+    // 5. Fallback 'it'
+    const langOrder = Array.from(new Set([
+        preferredLangOverride, 
+        i18n.language, 
+        'al', 
+        fallbackLang1, 
+        fallbackLang2
+    ].filter(Boolean) as string[]));
+
+    for (const lang of langOrder) {
+      const translation = translations.find(t => t.language === lang);
+      if (translation) {
+        if (field === 'description' && 'description' in translation) {
+          return translation.description ?? undefined;
+        }
+        if (field === 'name' && 'name' in translation) {
+          return translation.name ?? undefined;
+        }
+      }
     }
-    if (!translation || !translation[field]) {
-      translation = translations[0];
+    // Fallback to the first available translation's requested field if no preferred language match
+    const firstAvailable = translations[0];
+    if (firstAvailable) {
+        if (field === 'description' && 'description' in firstAvailable) {
+          return firstAvailable.description ?? undefined;
+        }
+        if (field === 'name' && 'name' in firstAvailable) {
+          return firstAvailable.name ?? undefined;
+        }
     }
-    return translation ? translation[field] : '';
+    return undefined;
   };
 
   const handleToggleAvailability = async (itemId: string, currentAvailability: boolean) => {
@@ -336,6 +372,41 @@ const Admin = () => {
       fetchCategories(); // Re-fetch to update UI based on new order
     }
   };
+
+  const filteredAndSearchedMenuItems = menuItems.filter(item => {
+    // Category Filter
+    if (selectedCategoryFilter && item.category_id !== selectedCategoryFilter) {
+      return false;
+    }
+
+    // Search Term Filter
+    if (searchTerm.trim() === '') {
+      return true; // No search term, so item passes this filter
+    }
+
+    const term = searchTerm.toLowerCase();
+    // Check name in all translations
+    const nameMatch = item.translations.some(trans =>
+      trans.name?.toLowerCase().includes(term)
+    );
+    if (nameMatch) return true;
+
+    // Check description in all translations
+    const descriptionMatch = item.translations.some(trans =>
+      trans.description?.toLowerCase().includes(term)
+    );
+    if (descriptionMatch) return true;
+    
+    // Check category name (translated using the refined getTranslation logic)
+    const category = categories.find(cat => cat.id === item.category_id);
+    if (category) {
+        // Pass i18n.language as the preferredLangOverride for category name matching
+        const categoryName = getTranslation(category.translations, 'name', i18n.language); 
+        if (categoryName?.toLowerCase().includes(term)) return true;
+    }
+
+    return false; // No match
+  });
 
   return (
     <div className="admin">
@@ -415,6 +486,31 @@ const Admin = () => {
               {t('add')}
             </button>
           </div>
+
+          {/* Search and Filter Controls START HERE */}
+          <div className="controls-container" style={{ marginBottom: '20px', marginTop: '10px', display: 'flex', gap: '15px', alignItems: 'center' }}>
+            <input
+              type="text"
+              placeholder={t('search_items_categories', 'Search items by name, description, category...')}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{ padding: '10px', flexGrow: 1, backgroundColor: '#2d3748', color: '#f7fafc', border: '1px solid #4a5568', borderRadius: 'var(--border-radius-small)' }}
+            />
+            <select
+              value={selectedCategoryFilter}
+              onChange={(e) => setSelectedCategoryFilter(e.target.value)}
+              style={{ padding: '10px', backgroundColor: '#2d3748', color: '#f7fafc', border: '1px solid #4a5568', borderRadius: 'var(--border-radius-small)' }}
+            >
+              <option value="">{t('all_categories', 'All Categories')}</option>
+              {categories.map(category => (
+                <option key={category.id} value={category.id}>
+                  {getTranslation(category.translations, 'name', i18n.language) || category.id}
+                </option>
+              ))}
+            </select>
+          </div>
+          {/* Search and Filter Controls END HERE */}
+
           <table className="table">
             <thead>
               <tr>
@@ -426,11 +522,11 @@ const Admin = () => {
               </tr>
             </thead>
             <tbody>
-              {menuItems.map((item) => (
+              {filteredAndSearchedMenuItems.map((item) => (
                 <tr key={item.id}>
-                  <td>{getTranslation(item.translations, 'name', 'al', 'en')}</td>
+                  <td>{getTranslation(item.translations, 'name', i18n.language) || 'N/A'}</td>
                   <td>
-                    {getTranslation(categories.find(c => c.id === item.category_id)?.translations || [], 'name', 'al', 'en')}
+                    {getTranslation(categories.find(c => c.id === item.category_id)?.translations || [], 'name', i18n.language) || 'N/A'}
                   </td>
                   <td>
                     {item.price !== null && item.price !== undefined 
