@@ -1,0 +1,161 @@
+:root {
+  --primary-color: #ff6347; /* Tomato */
+  --secondary-color: #4CAF50; /* Green */
+  --background-color: #f4f4f4;
+  --card-background-color: #ffffff;
+  --text-color: #333;
+  --star-empty-color: #ccc;
+  --star-filled-color: #f39c12; /* Orange for filled stars */
+  --border-radius: 8px;
+  --box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Dark mode overrides (optional, if you have a theme switcher) */
+body.dark-mode {
+    --primary-color: #ff7f50; /* Coral for dark mode */
+    --secondary-color: #5cb85c; /* Lighter Green */
+    --background-color: #1a202c; /* Dark blue-gray */
+    --card-background-color: #2d3748; /* Slightly lighter dark */
+    --text-color: #f7fafc; /* Light gray/white */
+    --star-empty-color: #4a5568; /* Darker gray for empty stars */
+    --star-filled-color: #f5b041; /* Slightly lighter orange */
+}
+
+.rating-page-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 100px); /* Adjust based on header/footer height */
+  padding: 20px;
+  background-color: var(--background-color);
+  color: var(--text-color);
+  font-family: sans-serif;
+}
+
+.rating-form-card {
+  background-color: var(--card-background-color);
+  padding: 30px;
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  width: 100%;
+  max-width: 500px;
+  text-align: center;
+}
+
+.rating-form-card h1 {
+  color: var(--primary-color);
+  margin-bottom: 25px;
+  font-size: 2em;
+}
+
+.form-group {
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: var(--text-color);
+}
+
+.star-rating {
+  display: flex;
+  justify-content: center; /* Center stars */
+  gap: 5px;
+  margin-bottom: 10px; /* Add some space below stars if needed */
+}
+
+.star-rating button {
+  background: none;
+  border: none;
+  font-size: 2.5rem; /* Increased size */
+  cursor: pointer;
+  padding: 0;
+  color: var(--star-empty-color);
+  transition: color 0.2s ease-in-out;
+}
+
+.star-rating button.star-selected {
+  color: var(--star-filled-color);
+}
+
+.star-rating button:hover {
+  transform: scale(1.1);
+}
+
+textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccc; /* Lighter border for text area */
+  border-radius: var(--border-radius);
+  box-sizing: border-box;
+  font-size: 1rem;
+  background-color: var(--card-background-color); /* Match card bg */
+  color: var(--text-color);
+  transition: border-color 0.3s;
+}
+
+textarea:focus {
+  border-color: var(--primary-color);
+  outline: none;
+}
+
+.submit-button {
+  background-color: var(--primary-color);
+  color: white;
+  padding: 12px 25px;
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-size: 1.1em;
+  transition: background-color 0.3s ease;
+  width: 100%;
+}
+
+.submit-button:hover {
+  background-color: #e65a40; /* Darker shade of primary */
+}
+
+.submit-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.submit-message {
+  padding: 15px;
+  margin-top: 20px;
+  border-radius: var(--border-radius);
+  font-size: 1em;
+}
+
+.submit-message.success {
+  background-color: #e8f5e9; /* Light green */
+  color: #2e7d32; /* Dark green */
+  border: 1px solid #a5d6a7;
+}
+
+.submit-message.error {
+  background-color: #ffebee; /* Light red */
+  color: #c62828; /* Dark red */
+  border: 1px solid #ef9a9a;
+}
+
+/* Dark mode specific adjustments if needed beyond variables */
+body.dark-mode .textarea {
+    border-color: var(--star-empty-color); /* Adjust for dark mode */
+}
+
+body.dark-mode .submit-message.success {
+    background-color: #1c3b1f; 
+    color: #81c784;
+    border-color: #388e3c;
+}
+
+body.dark-mode .submit-message.error {
+    background-color: #3c1f1f; 
+    color: #e57373;
+    border-color: #d32f2f;
+} 

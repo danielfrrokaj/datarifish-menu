@@ -2,19 +2,35 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Category, CategoryTranslation, MenuItemType, MenuItemTranslation, Language } from '../lib/supabase';
 import { supabase } from '../lib/supabase';
-import { FaTrash, FaPencilAlt, FaArrowUp, FaArrowDown } from 'react-icons/fa';
+import { FaTrash, FaPencilAlt, FaArrowUp, FaArrowDown, FaChevronDown, FaChevronRight } from 'react-icons/fa';
 import EditMenuItemForm from '../components/EditMenuItemForm';
 import EditCategoryForm from '../components/EditCategoryForm';
 import '../styles/Admin.css';
+
+// Define the type for ServiceRating
+interface ServiceRating {
+  id: string;
+  waiter_rating: number;
+  food_rating: number;
+  comments: string | null;
+  created_at: string;
+}
 
 const Admin = () => {
   const { t, i18n } = useTranslation();
   const [categories, setCategories] = useState<(Category & { translations: CategoryTranslation[] })[]>([]);
   const [menuItems, setMenuItems] = useState<(MenuItemType & { translations: MenuItemTranslation[] })[]>([]);
+  const [serviceRatings, setServiceRatings] = useState<ServiceRating[]>([]); // State for service ratings
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+
+  // State for collapsible sections
+  const [isCategoriesOpen, setIsCategoriesOpen] = useState(true);
+  const [isItemsOpen, setIsItemsOpen] = useState(true);
+  const [isRatingsOpen, setIsRatingsOpen] = useState(true);
+
   const [newItem, setNewItem] = useState({
     category_id: '',
     price: '',
@@ -41,6 +57,7 @@ const Admin = () => {
   useEffect(() => {
     fetchCategories();
     fetchMenuItems();
+    fetchServiceRatings(); // Fetch service ratings
   }, []);
 
   const fetchCategories = async () => {
@@ -98,6 +115,20 @@ const Admin = () => {
       return;
     }
     setMenuItems(data || []);
+  };
+
+  // Function to fetch service ratings
+  const fetchServiceRatings = async () => {
+    const { data, error } = await supabase
+      .from('service_ratings')
+      .select('id, waiter_rating, food_rating, comments, created_at')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching service ratings:', error);
+      return;
+    }
+    setServiceRatings(data || []);
   };
 
   const handleAddCategory = async () => {
@@ -408,6 +439,18 @@ const Admin = () => {
     return false; // No match
   });
 
+  // Helper to format date
+  const formatDate = (dateString: string) => {
+    const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false };
+    let langForDate = i18n.language;
+    try {
+      new Date().toLocaleDateString(langForDate);
+    } catch (e) {
+      langForDate = 'default';
+    }
+    return new Date(dateString).toLocaleDateString(langForDate, options);
+  };
+
   return (
     <div className="admin">
       <div className="container">
@@ -416,160 +459,211 @@ const Admin = () => {
         {/* Categories Section */}
         <section className="section">
           <div className="section-header">
-            <h2>{t('categories')}</h2>
+            <div onClick={() => setIsCategoriesOpen(!isCategoriesOpen)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', flexGrow: 1 }}>
+              <h2>{t('categories')}</h2>
+              {isCategoriesOpen ? <FaChevronDown style={{ marginLeft: '10px' }} /> : <FaChevronRight style={{ marginLeft: '10px' }} />}
+            </div>
             <button className="btn btn-primary" onClick={() => setEditingCategoryId('new')}>
               {t('add')}
             </button>
           </div>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Name (EN)</th>
-                <th>Name (AL)</th>
-                <th>Name (IT)</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {categories.map((category, index) => (
-                <tr key={category.id}>
-                  {(['en', 'al', 'it'] as Language[]).map((lang) => (
-                    <td key={lang}>
-                      {category.translations.find(t => t.language === lang)?.name || ''}
-                    </td>
-                  ))}
-                  <td>
-                    <div className="action-buttons">
-                      <button
-                        className="btn-icon move-btn"
-                        onClick={() => handleMoveCategory(category.id, 'up')}
-                        disabled={index === 0}
-                        title={t('move_up', 'Move Up')}
-                      >
-                        <FaArrowUp />
-                      </button>
-                      <button
-                        className="btn-icon move-btn"
-                        onClick={() => handleMoveCategory(category.id, 'down')}
-                        disabled={index === categories.length - 1}
-                        title={t('move_down', 'Move Down')}
-                      >
-                        <FaArrowDown />
-                      </button>
-                      <button
-                        className="btn-icon edit-btn"
-                        onClick={() => handleEditCategory(category.id)}
-                        title={t('edit')}
-                      >
-                        <FaPencilAlt />
-                      </button>
-                      <button
-                        className="btn-icon delete-btn"
-                        onClick={() => handleDeleteCategory(category.id)}
-                        title={t('delete')}
-                      >
-                        <FaTrash />
-                      </button>
-                    </div>
-                  </td>
+          {isCategoriesOpen && (
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Name (EN)</th>
+                  <th>Name (AL)</th>
+                  <th>Name (IT)</th>
+                  <th>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {categories.map((category, index) => (
+                  <tr key={category.id}>
+                    {(['en', 'al', 'it'] as Language[]).map((lang) => (
+                      <td key={lang}>
+                        {category.translations.find(t => t.language === lang)?.name || ''}
+                      </td>
+                    ))}
+                    <td>
+                      <div className="action-buttons">
+                        <button
+                          className="btn-icon move-btn"
+                          onClick={() => handleMoveCategory(category.id, 'up')}
+                          disabled={index === 0}
+                          title={t('move_up', 'Move Up')}
+                        >
+                          <FaArrowUp />
+                        </button>
+                        <button
+                          className="btn-icon move-btn"
+                          onClick={() => handleMoveCategory(category.id, 'down')}
+                          disabled={index === categories.length - 1}
+                          title={t('move_down', 'Move Down')}
+                        >
+                          <FaArrowDown />
+                        </button>
+                        <button
+                          className="btn-icon edit-btn"
+                          onClick={() => handleEditCategory(category.id)}
+                          title={t('edit')}
+                        >
+                          <FaPencilAlt />
+                        </button>
+                        <button
+                          className="btn-icon delete-btn"
+                          onClick={() => handleDeleteCategory(category.id)}
+                          title={t('delete')}
+                        >
+                          <FaTrash />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </section>
 
         {/* Menu Items Section */}
         <section className="section">
           <div className="section-header">
-            <h2>{t('items')}</h2>
+            <div onClick={() => setIsItemsOpen(!isItemsOpen)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', flexGrow: 1 }}>
+              <h2>{t('items')}</h2>
+              {isItemsOpen ? <FaChevronDown style={{ marginLeft: '10px' }} /> : <FaChevronRight style={{ marginLeft: '10px' }} />}
+            </div>
             <button className="btn btn-primary" onClick={() => setIsAddingItem(true)}>
               {t('add')}
             </button>
           </div>
 
-          {/* Search and Filter Controls START HERE */}
-          <div className="controls-container" style={{ marginBottom: '20px', marginTop: '10px', display: 'flex', gap: '15px', alignItems: 'center' }}>
-            <input
-              type="text"
-              placeholder={t('search_items_categories', 'Search items by name, description, category...')}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ padding: '10px', flexGrow: 1, backgroundColor: '#2d3748', color: '#f7fafc', border: '1px solid #4a5568', borderRadius: 'var(--border-radius-small)' }}
-            />
-            <select
-              value={selectedCategoryFilter}
-              onChange={(e) => setSelectedCategoryFilter(e.target.value)}
-              style={{ padding: '10px', backgroundColor: '#2d3748', color: '#f7fafc', border: '1px solid #4a5568', borderRadius: 'var(--border-radius-small)' }}
-            >
-              <option value="">{t('all_categories', 'All Categories')}</option>
-              {categories.map(category => (
-                <option key={category.id} value={category.id}>
-                  {getTranslation(category.translations, 'name', i18n.language) || category.id}
-                </option>
-              ))}
-            </select>
-          </div>
-          {/* Search and Filter Controls END HERE */}
+          {isItemsOpen && (
+            <>
+              {/* Search and Filter Controls START HERE */}
+              <div className="controls-container" style={{ marginBottom: '20px', marginTop: '10px', display: 'flex', gap: '15px', alignItems: 'center' }}>
+                <input
+                  type="text"
+                  placeholder={t('search_items_categories', 'Search items by name, description, category...')}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  style={{ padding: '10px', flexGrow: 1, backgroundColor: '#2d3748', color: '#f7fafc', border: '1px solid #4a5568', borderRadius: 'var(--border-radius-small)' }}
+                />
+                <select
+                  value={selectedCategoryFilter}
+                  onChange={(e) => setSelectedCategoryFilter(e.target.value)}
+                  style={{ padding: '10px', backgroundColor: '#2d3748', color: '#f7fafc', border: '1px solid #4a5568', borderRadius: 'var(--border-radius-small)' }}
+                >
+                  <option value="">{t('all_categories', 'All Categories')}</option>
+                  {categories.map(category => (
+                    <option key={category.id} value={category.id}>
+                      {getTranslation(category.translations, 'name', i18n.language) || category.id}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {/* Search and Filter Controls END HERE */}
 
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Category</th>
-                <th>Price</th>
-                <th>Availability</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredAndSearchedMenuItems.map((item) => (
-                <tr key={item.id}>
-                  <td>{getTranslation(item.translations, 'name', i18n.language) || 'N/A'}</td>
-                  <td>
-                    {getTranslation(categories.find(c => c.id === item.category_id)?.translations || [], 'name', i18n.language) || 'N/A'}
-                  </td>
-                  <td>
-                    {item.price !== null && item.price !== undefined 
-                      ? `${item.price.toLocaleString('sq-AL')} ALL` 
-                      : t('price_not_set', 'N/A')}
-                  </td>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span className={item.availability ? 'status-available' : 'status-unavailable'}>
-                        {item.availability ? 'Available' : 'Unavailable'}
-                      </span>
-                      <label className="toggle-switch" title={item.availability ? 'Mark as Unavailable' : 'Mark as Available'}>
-                        <input 
-                          type="checkbox" 
-                          checked={item.availability}
-                          onChange={() => handleToggleAvailability(item.id, item.availability)}
-                        />
-                        <span className="toggle-slider"></span>
-                      </label>
-                    </div>
-                  </td>
-                  <td>
-                    <div className="action-buttons">
-                      <button
-                        className="btn-icon edit-btn"
-                        onClick={() => handleEditMenuItem(item.id)}
-                        title={t('edit')}
-                      >
-                        <FaPencilAlt />
-                      </button>
-                      <button
-                        className="btn-icon delete-btn"
-                        onClick={() => handleDeleteMenuItem(item.id)}
-                        title={t('delete')}
-                      >
-                        <FaTrash />
-                      </button>
-                    </div>
-                  </td>
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Price</th>
+                    <th>Availability</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredAndSearchedMenuItems.map((item) => (
+                    <tr key={item.id}>
+                      <td>{getTranslation(item.translations, 'name', i18n.language) || 'N/A'}</td>
+                      <td>
+                        {getTranslation(categories.find(c => c.id === item.category_id)?.translations || [], 'name', i18n.language) || 'N/A'}
+                      </td>
+                      <td>
+                        {item.price !== null && item.price !== undefined 
+                          ? `${item.price.toLocaleString('sq-AL')} ALL` 
+                          : t('price_not_set', 'N/A')}
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span className={item.availability ? 'status-available' : 'status-unavailable'}>
+                            {item.availability ? 'Available' : 'Unavailable'}
+                          </span>
+                          <label className="toggle-switch" title={item.availability ? 'Mark as Unavailable' : 'Mark as Available'}>
+                            <input 
+                              type="checkbox" 
+                              checked={item.availability}
+                              onChange={() => handleToggleAvailability(item.id, item.availability)}
+                            />
+                            <span className="toggle-slider"></span>
+                          </label>
+                        </div>
+                      </td>
+                      <td>
+                        <div className="action-buttons">
+                          <button
+                            className="btn-icon edit-btn"
+                            onClick={() => handleEditMenuItem(item.id)}
+                            title={t('edit')}
+                          >
+                            <FaPencilAlt />
+                          </button>
+                          <button
+                            className="btn-icon delete-btn"
+                            onClick={() => handleDeleteMenuItem(item.id)}
+                            title={t('delete')}
+                          >
+                            <FaTrash />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
+          )}
+        </section>
+
+        {/* Service Ratings Section */}
+        <section className="section">
+          <div className="section-header">
+            <div onClick={() => setIsRatingsOpen(!isRatingsOpen)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', flexGrow: 1 }}>
+              <h2>{t('service_ratings_title', 'Service Ratings')}</h2>
+              {isRatingsOpen ? <FaChevronDown style={{ marginLeft: '10px' }} /> : <FaChevronRight style={{ marginLeft: '10px' }} />}
+            </div>
+            {/* No add button for ratings, the div for the title will take available space due to flexGrow: 1 */}
+          </div>
+          {isRatingsOpen && (
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>{t('rating_date', 'Date')}</th>
+                  <th>{t('waiter_rating', 'Waiter Rating')}</th>
+                  <th>{t('food_rating', 'Food Rating')}</th>
+                  <th>{t('comments', 'Comments')}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {serviceRatings.length > 0 ? (
+                  serviceRatings.map((rating) => (
+                    <tr key={rating.id}>
+                      <td>{formatDate(rating.created_at)}</td>
+                      <td>{'⭐'.repeat(rating.waiter_rating)} ({rating.waiter_rating}/5)</td>
+                      <td>{'⭐'.repeat(rating.food_rating)} ({rating.food_rating}/5)</td>
+                      <td>{rating.comments || '-'}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={4} style={{ textAlign: 'center' }}>{t('no_ratings_yet', 'No ratings submitted yet.')}</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          )}
         </section>
 
         {/* Add Category Dialog */}

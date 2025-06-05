@@ -504,4 +504,67 @@ h1, h2, h3, h4, h5, h6 {
     padding: var(--spacing-sm) var(--spacing-md);
     font-size: var(--font-size-sm);
   }
+}
+
+/* New Compact Footer Styles */
+.footer-content-compact {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: var(--spacing-sm) 0; /* Reduced padding */
+  font-size: var(--font-size-sm); /* Slightly smaller font */
+}
+
+.footer-left {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.footer-right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md); /* Gap between link and switcher */
+}
+
+.footer-link-compact {
+  color: var(--footer-text);
+  text-decoration: none;
+  transition: all var(--transition-speed);
+}
+
+.footer-link-compact:hover {
+  color: var(--accent-color);
+  text-decoration: underline;
+}
+
+.footer-language-switcher-compact {
+  background-color: transparent;
+  color: var(--footer-text);
+  border: 1px solid var(--footer-text); /* Subtle border */
+  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-xs) var(--spacing-xs);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+}
+
+.footer-language-switcher-compact option {
+  background-color: var(--footer-bg); /* For dropdown options */
+  color: var(--footer-text);
+}
+
+/* Responsive adjustments for compact footer */
+@media (max-width: 600px) {
+  .footer-content-compact {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    text-align: center;
+  }
+  .footer-right {
+    gap: var(--spacing-sm);
+    flex-direction: column; /* Stack link and switcher on small screens if needed */
+    align-items: center;
+  }
 } 

@@ -15,6 +15,7 @@ import Admin from "./pages/Admin";
 import AdminLogin from "./pages/AdminLogin";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthProvider } from "./contexts/AuthContext";
+import RatingPage from "./pages/Rating";
 import "./styles/global.css";
 
 const App = () => {
@@ -95,43 +96,32 @@ const App = () => {
                   </ProtectedRoute>
                 }
               />
+              <Route path="/rating" element={<RatingPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
 
           <footer className="footer">
             <div className="container">
-              <div className="footer-content">
-                <div className="footer-brand">
-                  <FaUtensils />
-                  <span>Detari Fish</span>
+              <div className="footer-content-compact">
+                <div className="footer-left">
+                  <FaUtensils style={{ marginRight: '8px' }} />
+                  <span>Detari Fish © {new Date().getFullYear()}</span>
                 </div>
-                <p className="footer-text">
-                  <span>
-                    Need a menu like{" "}
-                    <a href="https://danielfrrokaj.com">this</a>?
-                  </span>
-                  <br />
-                  {t("footer")} - {new Date().getFullYear()}
-                </p>
-                <div className="footer-links">
+                <div className="footer-right">
+                  <Link to="/rating" className="footer-link-compact" onClick={() => setIsMenuOpen(false)}>
+                    {t("rate_our_service", "Rate Service")}
+                  </Link>
                   <select
                     value={i18n.language}
                     onChange={(e) => handleLanguageChange(e.target.value)}
-                    style={{
-                      color: "inherit",
-                      minWidth: "60px",
-                      fontSize: window.innerWidth < 600 ? "0.875rem" : "1rem",
-                      border: "none",
-                      background: "transparent",
-                    }}
+                    className="footer-language-switcher-compact"
                   >
                     <option value="en">EN</option>
                     <option value="al">AL</option>
                     <option value="it">IT</option>
                   </select>
                 </div>
-                <p className="footerText"></p>
               </div>
             </div>
           </footer>
