@@ -43,6 +43,7 @@ const resources = {
       food_rating: "Food Rating",
       comments: "Comments",
       no_ratings_yet: "No ratings submitted yet.",
+      out_of_stock: "Product is unavailable",
     },
   },
   al: {
@@ -86,6 +87,7 @@ const resources = {
       food_rating: "Vlerësimi i Ushqimit",
       comments: "Komentet",
       no_ratings_yet: "Asnjë vlerësim i dërguar ende.",
+      out_of_stock: "Produkti nuk është në dispozicion",
     },
   },
   it: {
@@ -129,6 +131,7 @@ const resources = {
       food_rating: "Valutazione Cibo",
       comments: "Commenti",
       no_ratings_yet: "Nessuna valutazione inviata per ora.",
+      out_of_stock: "Prodotto non disponibile",
     },
   },
 };
