@@ -748,73 +748,66 @@ input:checked + .toggle-slider:before {
 
 /* Mobile responsiveness */
 @media (max-width: 768px) {
-  .admin {
-    padding: var(--spacing-md);
-  }
-
-  .section {
-    padding: var(--spacing-md);
-    margin-bottom: var(--spacing-lg);
-    border-radius: 8px;
-  }
-
-  .section-header {
+  .admin-panel-layout {
     flex-direction: column;
-    align-items: stretch;
-    gap: var(--spacing-sm);
+    height: auto; /* Allow height to adjust to content */
   }
 
-  .section-header h2 {
-    text-align: center;
+  .admin-sidebar {
+    width: 100%;
+    height: auto; /* Adjust height to content */
+    padding: 10px; /* Smaller padding for mobile */
+    flex-direction: row; /* Arrange nav links in a row */
+    justify-content: space-around; /* Distribute nav links */
+    flex-wrap: wrap; /* Allow nav links to wrap if needed */
+    border-right: none; /* Remove right border */
+    border-bottom: 1px solid var(--admin-border-color, #4a5568); /* Add bottom border */
   }
 
-  .table-container {
-    margin: 0 calc(var(--spacing-md) * -1);
-    padding: 0 var(--spacing-md);
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+  .admin-nav-link {
+    margin: 5px; /* Adjust margin for row layout */
+    flex-grow: 1; /* Allow links to grow and fill space */
+    text-align: center; /* Center text in nav links */
   }
 
-  .dialog {
-    padding: 0;
-    align-items: flex-end;
+  .admin-nav-link svg {
+    margin-right: 5px; /* Smaller margin for icons */
   }
 
+  .admin-content {
+    width: 100%;
+    padding: 15px; /* Slightly reduced padding for mobile */
+    margin-left: 0; /* Remove margin when sidebar is stacked */
+    height: auto; /* Allow height to grow with content */
+  }
+
+  .admin-content .section-header {
+    flex-direction: column; /* Stack header items on mobile */
+    align-items: flex-start; /* Align items to the start */
+  }
+
+  .admin-content .section-header h2 {
+    margin-bottom: 10px; /* Add space below title when stacked */
+  }
+  
+  .admin-content .section-header .btn {
+    width: 100%; /* Make button full width */
+    margin-top: 10px;
+  }
+
+  .controls-container {
+    flex-direction: column;
+    gap: 10px !important; /* Override inline style if necessary */
+  }
+
+  .controls-container input[type="text"],
+  .controls-container select {
+    width: 100%; /* Make search and filter full width */
+  }
+  
   .dialog-content {
-    margin: 0;
-    border-radius: 20px 20px 0 0;
-    max-height: 90vh;
-    overflow-y: auto;
-    animation: dialogSlideUp 0.3s ease-out;
-  }
-
-  @keyframes dialogSlideUp {
-    from {
-      opacity: 0;
-      transform: translateY(100%);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .form-grid {
-    gap: var(--spacing-md);
-  }
-
-  .dialog-actions {
-    flex-direction: column;
-    gap: var(--spacing-sm);
-  }
-
-  .dialog-actions button {
-    width: 100%;
-  }
-
-  .btn {
-    width: 100%;
-    padding: var(--spacing-md);
+    width: 95%;
+    max-width: 100%;
   }
 }
 

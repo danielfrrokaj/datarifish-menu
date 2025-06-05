@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Category, CategoryTranslation, MenuItemType, MenuItemTranslation, Language } from '../lib/supabase';
 import { supabase } from '../lib/supabase';
-import { FaTrash, FaPencilAlt, FaArrowUp, FaArrowDown, FaChevronDown, FaChevronRight } from 'react-icons/fa';
+import { FaTrash, FaPencilAlt, FaArrowUp, FaArrowDown, FaListAlt, FaUtensils, FaStar } from 'react-icons/fa';
 import EditMenuItemForm from '../components/EditMenuItemForm';
 import EditCategoryForm from '../components/EditCategoryForm';
 import '../styles/Admin.css';
@@ -16,20 +16,19 @@ interface ServiceRating {
   created_at: string;
 }
 
+type AdminSection = 'categories' | 'items' | 'ratings'; // Type for active section
+
 const Admin = () => {
   const { t, i18n } = useTranslation();
   const [categories, setCategories] = useState<(Category & { translations: CategoryTranslation[] })[]>([]);
   const [menuItems, setMenuItems] = useState<(MenuItemType & { translations: MenuItemTranslation[] })[]>([]);
-  const [serviceRatings, setServiceRatings] = useState<ServiceRating[]>([]); // State for service ratings
+  const [serviceRatings, setServiceRatings] = useState<ServiceRating[]>([]);
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
 
-  // State for collapsible sections
-  const [isCategoriesOpen, setIsCategoriesOpen] = useState(true);
-  const [isItemsOpen, setIsItemsOpen] = useState(true);
-  const [isRatingsOpen, setIsRatingsOpen] = useState(true);
+  const [activeAdminSection, setActiveAdminSection] = useState<AdminSection>('categories'); // New state for active section
 
   const [newItem, setNewItem] = useState({
     category_id: '',
@@ -52,12 +51,12 @@ const Admin = () => {
     },
   });
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState(''); // '' for All
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('');
 
   useEffect(() => {
     fetchCategories();
     fetchMenuItems();
-    fetchServiceRatings(); // Fetch service ratings
+    fetchServiceRatings();
   }, []);
 
   const fetchCategories = async () => {
@@ -117,7 +116,6 @@ const Admin = () => {
     setMenuItems(data || []);
   };
 
-  // Function to fetch service ratings
   const fetchServiceRatings = async () => {
     const { data, error } = await supabase
       .from('service_ratings')
@@ -183,9 +181,7 @@ const Admin = () => {
       console.error('Category is required');
       return;
     }
-
     const priceValue = newItem.price.trim() === '' ? null : parseFloat(newItem.price);
-
     const { data: menuItem, error: menuItemError } = await supabase
       .from('menu_items')
       .insert([{
@@ -201,8 +197,6 @@ const Admin = () => {
       console.error('Error adding menu item:', menuItemError);
       return;
     }
-
-    // Filter out empty translations
     const translations = Object.entries(newItem.translations)
       .filter(([_, trans]) => trans.name.trim() !== '')
       .map(([lang, trans]) => ({
@@ -216,18 +210,15 @@ const Admin = () => {
       console.error('At least one translation is required');
       return;
     }
-
     const { error: translationsError } = await supabase
       .from('menu_item_translations')
       .insert(translations);
 
     if (translationsError) {
       console.error('Error adding menu item translations:', translationsError);
-      // Clean up the menu item if translations fail
       await supabase.from('menu_items').delete().eq('id', menuItem.id);
       return;
     }
-
     setIsAddingItem(false);
     setNewItem({
       category_id: '',
@@ -244,54 +235,26 @@ const Admin = () => {
   };
 
   const handleDeleteMenuItem = async (id: string) => {
-    const { error } = await supabase
-      .from('menu_items')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      console.error('Error deleting menu item:', error);
-      return;
-    }
-
-    fetchMenuItems();
+    const { error } = await supabase.from('menu_items').delete().eq('id', id);
+    if (error) console.error('Error deleting menu item:', error);
+    else fetchMenuItems();
   };
 
   const handleDeleteCategory = async (id: string) => {
-    const { error } = await supabase
-      .from('categories')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      console.error('Error deleting category:', error);
-      return;
-    }
-
-    fetchCategories();
+    const { error } = await supabase.from('categories').delete().eq('id', id);
+    if (error) console.error('Error deleting category:', error);
+    else fetchCategories();
   };
 
-  const handleEditCategory = (id: string) => {
-    setEditingCategoryId(id);
-  };
-
-  const handleCloseEditCategory = () => {
-    setEditingCategoryId(null);
-  };
-
+  const handleEditCategory = (id: string) => setEditingCategoryId(id);
+  const handleCloseEditCategory = () => setEditingCategoryId(null);
   const handleSaveEditCategory = () => {
     fetchCategories();
     setEditingCategoryId(null);
   };
 
-  const handleEditMenuItem = (id: string) => {
-    setEditingItemId(id);
-  };
-
-  const handleCloseEdit = () => {
-    setEditingItemId(null);
-  };
-
+  const handleEditMenuItem = (id: string) => setEditingItemId(id);
+  const handleCloseEdit = () => setEditingItemId(null);
   const handleSaveEdit = () => {
     fetchMenuItems();
     setEditingItemId(null);
@@ -300,48 +263,23 @@ const Admin = () => {
   const getTranslation = (
     translations: CategoryTranslation[] | MenuItemTranslation[] | undefined,
     field: 'name' | 'description' = 'name',
-    // Use i18n.language as a dynamic preferredLang, then specific fallbacks
     preferredLangOverride?: string, 
     fallbackLang1: string = 'en',
     fallbackLang2: string = 'it'
   ): string | undefined => {
-    if (!translations || translations.length === 0) {
-      return undefined;
-    }
-    // Order of preference:
-    // 1. Overridden preferred language (if provided)
-    // 2. Current i18n language
-    // 3. Default 'al' (original primary)
-    // 4. Fallback 'en'
-    // 5. Fallback 'it'
-    const langOrder = Array.from(new Set([
-        preferredLangOverride, 
-        i18n.language, 
-        'al', 
-        fallbackLang1, 
-        fallbackLang2
-    ].filter(Boolean) as string[]));
-
+    if (!translations || translations.length === 0) return undefined;
+    const langOrder = Array.from(new Set([preferredLangOverride, i18n.language, 'al', fallbackLang1, fallbackLang2].filter(Boolean) as string[]));
     for (const lang of langOrder) {
       const translation = translations.find(t => t.language === lang);
       if (translation) {
-        if (field === 'description' && 'description' in translation) {
-          return translation.description ?? undefined;
-        }
-        if (field === 'name' && 'name' in translation) {
-          return translation.name ?? undefined;
-        }
+        if (field === 'description' && 'description' in translation) return translation.description ?? undefined;
+        if (field === 'name' && 'name' in translation) return translation.name ?? undefined;
       }
     }
-    // Fallback to the first available translation's requested field if no preferred language match
     const firstAvailable = translations[0];
     if (firstAvailable) {
-        if (field === 'description' && 'description' in firstAvailable) {
-          return firstAvailable.description ?? undefined;
-        }
-        if (field === 'name' && 'name' in firstAvailable) {
-          return firstAvailable.name ?? undefined;
-        }
+        if (field === 'description' && 'description' in firstAvailable) return firstAvailable.description ?? undefined;
+        if (field === 'name' && 'name' in firstAvailable) return firstAvailable.name ?? undefined;
     }
     return undefined;
   };
@@ -353,121 +291,83 @@ const Admin = () => {
       .eq('id', itemId)
       .select()
       .single();
-
-    if (error) {
-      console.error('Error toggling availability:', error);
-      // Potentially set an error state to show in UI
-      return;
-    }
-
-    if (data) {
-      setMenuItems(prevItems =>
-        prevItems.map(item =>
-          item.id === itemId ? { ...item, availability: data.availability } : item
-        )
-      );
-    }
+    if (error) console.error('Error toggling availability:', error);
+    if (data) setMenuItems(prevItems => prevItems.map(item => item.id === itemId ? { ...item, availability: data.availability } : item));
   };
 
   const handleMoveCategory = async (categoryId: string, direction: 'up' | 'down') => {
     const currentIndex = categories.findIndex(c => c.id === categoryId);
     if (currentIndex === -1) return;
-
     const currentCategory = categories[currentIndex];
-    let targetIndex = -1;
-
-    if (direction === 'up') {
-      if (currentIndex === 0) return; // Already at the top
-      targetIndex = currentIndex - 1;
-    } else {
-      if (currentIndex === categories.length - 1) return; // Already at the bottom
-      targetIndex = currentIndex + 1;
-    }
-
+    let targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex < 0 || targetIndex >= categories.length) return;
     const targetCategory = categories[targetIndex];
-
     if (!currentCategory || !targetCategory) return;
-
-    // Swap order_index values
     const updates = [
       supabase.from('categories').update({ order_index: targetCategory.order_index }).eq('id', currentCategory.id),
       supabase.from('categories').update({ order_index: currentCategory.order_index }).eq('id', targetCategory.id)
     ];
-
     const results = await Promise.all(updates);
     const errors = results.map(res => res.error).filter(Boolean);
-
-    if (errors.length > 0) {
-      errors.forEach(err => console.error('Error moving category:', err));
-    } else {
-      fetchCategories(); // Re-fetch to update UI based on new order
-    }
+    if (errors.length > 0) errors.forEach(err => console.error('Error moving category:', err));
+    else fetchCategories();
   };
 
   const filteredAndSearchedMenuItems = menuItems.filter(item => {
-    // Category Filter
-    if (selectedCategoryFilter && item.category_id !== selectedCategoryFilter) {
-      return false;
-    }
-
-    // Search Term Filter
-    if (searchTerm.trim() === '') {
-      return true; // No search term, so item passes this filter
-    }
-
+    if (selectedCategoryFilter && item.category_id !== selectedCategoryFilter) return false;
+    if (searchTerm.trim() === '') return true;
     const term = searchTerm.toLowerCase();
-    // Check name in all translations
-    const nameMatch = item.translations.some(trans =>
-      trans.name?.toLowerCase().includes(term)
-    );
+    const nameMatch = item.translations.some(trans => trans.name?.toLowerCase().includes(term));
     if (nameMatch) return true;
-
-    // Check description in all translations
-    const descriptionMatch = item.translations.some(trans =>
-      trans.description?.toLowerCase().includes(term)
-    );
+    const descriptionMatch = item.translations.some(trans => trans.description?.toLowerCase().includes(term));
     if (descriptionMatch) return true;
-    
-    // Check category name (translated using the refined getTranslation logic)
     const category = categories.find(cat => cat.id === item.category_id);
     if (category) {
-        // Pass i18n.language as the preferredLangOverride for category name matching
         const categoryName = getTranslation(category.translations, 'name', i18n.language); 
         if (categoryName?.toLowerCase().includes(term)) return true;
     }
-
-    return false; // No match
+    return false;
   });
 
-  // Helper to format date
   const formatDate = (dateString: string) => {
     const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false };
     let langForDate = i18n.language;
-    try {
-      new Date().toLocaleDateString(langForDate);
-    } catch (e) {
-      langForDate = 'default';
-    }
+    try { new Date().toLocaleDateString(langForDate); } catch (e) { langForDate = 'default'; }
     return new Date(dateString).toLocaleDateString(langForDate, options);
   };
 
   return (
-    <div className="admin">
-      <div className="container">
-        <h1>{t('admin')}</h1>
+    <div className="admin-panel-layout">
+      <div className="admin-sidebar">
+        <button
+          className={`admin-nav-link ${activeAdminSection === 'categories' ? 'active' : ''}`}
+          onClick={() => setActiveAdminSection('categories')}
+        >
+          <FaListAlt /> {t('categories')}
+        </button>
+        <button
+          className={`admin-nav-link ${activeAdminSection === 'items' ? 'active' : ''}`}
+          onClick={() => setActiveAdminSection('items')}
+        >
+          <FaUtensils /> {t('items')}
+        </button>
+        <button
+          className={`admin-nav-link ${activeAdminSection === 'ratings' ? 'active' : ''}`}
+          onClick={() => setActiveAdminSection('ratings')}
+        >
+          <FaStar /> {t('service_ratings_title', 'Service Ratings')}
+        </button>
+      </div>
 
-        {/* Categories Section */}
-        <section className="section">
-          <div className="section-header">
-            <div onClick={() => setIsCategoriesOpen(!isCategoriesOpen)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', flexGrow: 1 }}>
+      <div className="admin-content">
+        {activeAdminSection === 'categories' && (
+          <section className="section">
+            <div className="section-header">
               <h2>{t('categories')}</h2>
-              {isCategoriesOpen ? <FaChevronDown style={{ marginLeft: '10px' }} /> : <FaChevronRight style={{ marginLeft: '10px' }} />}
+              <button className="btn btn-primary" onClick={() => setEditingCategoryId('new')}>
+                {t('add')}
+              </button>
             </div>
-            <button className="btn btn-primary" onClick={() => setEditingCategoryId('new')}>
-              {t('add')}
-            </button>
-          </div>
-          {isCategoriesOpen && (
             <table className="table">
               <thead>
                 <tr>
@@ -523,24 +423,18 @@ const Admin = () => {
                 ))}
               </tbody>
             </table>
-          )}
-        </section>
+          </section>
+        )}
 
-        {/* Menu Items Section */}
-        <section className="section">
-          <div className="section-header">
-            <div onClick={() => setIsItemsOpen(!isItemsOpen)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', flexGrow: 1 }}>
+        {activeAdminSection === 'items' && (
+          <section className="section">
+            <div className="section-header">
               <h2>{t('items')}</h2>
-              {isItemsOpen ? <FaChevronDown style={{ marginLeft: '10px' }} /> : <FaChevronRight style={{ marginLeft: '10px' }} />}
+              <button className="btn btn-primary" onClick={() => setIsAddingItem(true)}>
+                {t('add')}
+              </button>
             </div>
-            <button className="btn btn-primary" onClick={() => setIsAddingItem(true)}>
-              {t('add')}
-            </button>
-          </div>
-
-          {isItemsOpen && (
             <>
-              {/* Search and Filter Controls START HERE */}
               <div className="controls-container" style={{ marginBottom: '20px', marginTop: '10px', display: 'flex', gap: '15px', alignItems: 'center' }}>
                 <input
                   type="text"
@@ -562,8 +456,6 @@ const Admin = () => {
                   ))}
                 </select>
               </div>
-              {/* Search and Filter Controls END HERE */}
-
               <table className="table">
                 <thead>
                   <tr>
@@ -624,19 +516,14 @@ const Admin = () => {
                 </tbody>
               </table>
             </>
-          )}
-        </section>
+          </section>
+        )}
 
-        {/* Service Ratings Section */}
-        <section className="section">
-          <div className="section-header">
-            <div onClick={() => setIsRatingsOpen(!isRatingsOpen)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', flexGrow: 1 }}>
+        {activeAdminSection === 'ratings' && (
+          <section className="section">
+            <div className="section-header">
               <h2>{t('service_ratings_title', 'Service Ratings')}</h2>
-              {isRatingsOpen ? <FaChevronDown style={{ marginLeft: '10px' }} /> : <FaChevronRight style={{ marginLeft: '10px' }} />}
             </div>
-            {/* No add button for ratings, the div for the title will take available space due to flexGrow: 1 */}
-          </div>
-          {isRatingsOpen && (
             <table className="table">
               <thead>
                 <tr>
@@ -663,10 +550,10 @@ const Admin = () => {
                 )}
               </tbody>
             </table>
-          )}
-        </section>
+          </section>
+        )}
 
-        {/* Add Category Dialog */}
+        {/* Add Category Dialog (controlled by isAddingCategory state) */}
         {isAddingCategory && (
           <div className="dialog">
             <div className="dialog-content">
@@ -848,7 +735,7 @@ const Admin = () => {
           </div>
         )}
 
-        {/* Edit Menu Item Form */}
+        {/* Edit Menu Item Form (Dialog) */}
         {editingItemId && (
           <EditMenuItemForm
             itemId={editingItemId}
@@ -857,7 +744,7 @@ const Admin = () => {
           />
         )}
 
-        {/* Edit Category Form */}
+        {/* Edit Category Form (Dialog) - Handles both Add (new) and Edit */}
         {editingCategoryId && (
           <EditCategoryForm
             categoryId={editingCategoryId === 'new' ? null : editingCategoryId}
