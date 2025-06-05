@@ -44,6 +44,7 @@ const resources = {
       comments: "Comments",
       no_ratings_yet: "No ratings submitted yet.",
       out_of_stock: "Product is unavailable",
+      created_by: "Created by ",
     },
   },
   al: {
@@ -88,6 +89,7 @@ const resources = {
       comments: "Komentet",
       no_ratings_yet: "Asnjë vlerësim i dërguar ende.",
       out_of_stock: "Produkti nuk është në dispozicion",
+      created_by: "Krijuar nga ",
     },
   },
   it: {
@@ -132,6 +134,7 @@ const resources = {
       comments: "Commenti",
       no_ratings_yet: "Nessuna valutazione inviata per ora.",
       out_of_stock: "Prodotto non disponibile",
+      created_by: "Creato da ",
     },
   },
 };

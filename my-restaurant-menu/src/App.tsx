@@ -105,8 +105,18 @@ const App = () => {
             <div className="container">
               <div className="footer-content-compact">
                 <div className="footer-left">
-                  <FaUtensils style={{ marginRight: '8px' }} />
-                  <span>Detari Fish © {new Date().getFullYear()}</span>
+                  <div className="footer-copyright-line">
+                    <FaUtensils style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                    <span style={{ verticalAlign: 'middle' }}>Detari Fish © {new Date().getFullYear()}</span>
+                  </div>
+                  <div className="footer-credits-line">
+                    <span className="credits-text">
+                      {t('created_by', 'Created by ')}
+                      <a href="https://www.danielfrrokaj.com/" target="_blank" rel="noopener noreferrer" className="credits-link">
+                        Daniel Frrokaj
+                      </a>
+                    </span>
+                  </div>
                 </div>
                 <div className="footer-right">
                   <Link to="/rating" className="footer-link-compact" onClick={() => setIsMenuOpen(false)}>
